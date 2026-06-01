@@ -1,0 +1,2 @@
+- 前端 UI 优先使用 bun + Shadcn UI + Tailwind CSS，面向纯桌面端高密度界面，禁止适配移动端响应式布局
+- 开发完成后确保 build 通过
