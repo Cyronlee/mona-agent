@@ -1,11 +1,13 @@
 import {
-  ComponentProps,
-  PointerEvent,
-  ReactNode,
   useCallback,
   useEffect,
   useRef,
   useState,
+} from "react"
+import type {
+  ComponentProps,
+  PointerEvent,
+  ReactNode,
 } from "react"
 import { useDataGrid } from "@/components/reui/data-grid/data-grid"
 import { ScrollArea as ScrollAreaPrimitive } from "radix-ui"

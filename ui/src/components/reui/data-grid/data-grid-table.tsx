@@ -1,21 +1,23 @@
 import {
-  CSSProperties,
   Fragment,
   memo,
-  MouseEvent as ReactMouseEvent,
-  ReactNode,
-  TouchEvent as ReactTouchEvent,
-  Ref,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react"
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+  TouchEvent as ReactTouchEvent,
+  Ref,
+} from "react"
 import { useDataGrid } from "@/components/reui/data-grid/data-grid"
-import {
+import { flexRender } from "@tanstack/react-table"
+import type {
   Cell,
   Column,
-  flexRender,
   Header,
   HeaderGroup,
   Row,

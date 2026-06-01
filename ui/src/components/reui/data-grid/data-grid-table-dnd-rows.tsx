@@ -2,14 +2,16 @@
 
 import {
   createContext,
-  CSSProperties,
-  ReactNode,
   useContext,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
+} from "react"
+import type {
+  CSSProperties,
+  ReactNode,
 } from "react"
 import { useDataGrid } from "@/components/reui/data-grid/data-grid"
 import {
@@ -34,12 +36,12 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  UniqueIdentifier,
   useSensor,
   useSensors,
   type DragEndEvent,
   type Modifier,
 } from "@dnd-kit/core"
+import type { UniqueIdentifier } from "@dnd-kit/core"
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import {
   SortableContext,
@@ -47,7 +49,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Cell, flexRender, HeaderGroup, Row } from "@tanstack/react-table"
+import { flexRender } from "@tanstack/react-table"
+import type { Cell, HeaderGroup, Row } from "@tanstack/react-table"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

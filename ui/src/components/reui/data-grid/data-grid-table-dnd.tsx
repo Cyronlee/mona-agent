@@ -1,11 +1,13 @@
 import {
-  CSSProperties,
   Fragment,
-  ReactNode,
   useEffect,
   useId,
   useRef,
   useState,
+} from "react"
+import type {
+  CSSProperties,
+  ReactNode,
 } from "react"
 import { useDataGrid } from "@/components/reui/data-grid/data-grid"
 import {
@@ -29,22 +31,22 @@ import {
   closestCenter,
   DndContext,
   KeyboardSensor,
-  Modifier,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core"
+import type { Modifier } from "@dnd-kit/core"
 import {
   horizontalListSortingStrategy,
   SortableContext,
   useSortable,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import {
+import { flexRender } from "@tanstack/react-table"
+import type {
   Cell,
-  flexRender,
   Header,
   HeaderGroup,
   Row,

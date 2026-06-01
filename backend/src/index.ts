@@ -3,6 +3,7 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 import { processManager } from "./process-manager/index.js"
 import { chatRouter } from "./routes/chat.js"
+import { documentsRouter } from "./routes/documents.js"
 
 const PORT = Number(process.env.PORT ?? 3000)
 
@@ -21,6 +22,7 @@ app.use(
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 app.route("/api/chat", chatRouter)
+app.route("/api/documents", documentsRouter)
 
 app.get("/health", (c) => c.json({ status: "ok", ts: new Date().toISOString() }))
 

@@ -212,9 +212,101 @@ export const bashTool = tool({
   },
 })
 
+// ─── Tool: search_documents ──────────────────────────────────────────────────
+
+export const searchDocumentsTool = tool({
+  description:
+    "Search documents in the document library. Returns a list of documents (without content) matching the optional folder and/or title query.",
+  parameters: z.object({
+    folder: z.string().optional().describe("Filter by folder name"),
+    query: z.string().optional().describe("Search by title keyword"),
+  }),
+  execute: async ({ folder, query }) => {
+    const where: Record<string, unknown> = {}
+    if (folder) where.folder = folder
+    if (query) where.title = { contains: query }
+
+    const documents = await prisma.document.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        folder: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+    return { documents, count: documents.length }
+  },
+})
+
+// ─── Tool: get_document ──────────────────────────────────────────────────────
+
+export const getDocumentTool = tool({
+  description:
+    "Get a single document by ID, including its full content.",
+  parameters: z.object({
+    id: z.string().describe("The document ID"),
+  }),
+  execute: async ({ id }) => {
+    const document = await prisma.document.findUnique({ where: { id } })
+    if (!document) return { error: "Document not found" }
+    return document
+  },
+})
+
+// ─── Tool: update_document ───────────────────────────────────────────────────
+
+export const updateDocumentTool = tool({
+  description:
+    "Update a document's title, folder, or content. Only the provided fields are updated.",
+  parameters: z.object({
+    id: z.string().describe("The document ID"),
+    title: z.string().optional().describe("New title"),
+    folder: z.string().optional().describe("New folder name"),
+    content: z.string().optional().describe("New content (Markdown)"),
+  }),
+  execute: async ({ id, title, folder, content }) => {
+    const existing = await prisma.document.findUnique({ where: { id } })
+    if (!existing) return { error: "Document not found" }
+
+    const document = await prisma.document.update({
+      where: { id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(folder !== undefined && { folder }),
+        ...(content !== undefined && { content }),
+      },
+    })
+    return document
+  },
+})
+
+// ─── Tool: delete_document ───────────────────────────────────────────────────
+
+export const deleteDocumentTool = tool({
+  description:
+    "Delete a document by ID.",
+  parameters: z.object({
+    id: z.string().describe("The document ID"),
+  }),
+  execute: async ({ id }) => {
+    const existing = await prisma.document.findUnique({ where: { id } })
+    if (!existing) return { error: "Document not found" }
+
+    await prisma.document.delete({ where: { id } })
+    return { success: true, message: `Document "${existing.title}" deleted.` }
+  },
+})
+
 export const agentTools = {
   read: readTool,
   write: writeTool,
   edit: editTool,
   bash: bashTool,
+  search_documents: searchDocumentsTool,
+  get_document: getDocumentTool,
+  update_document: updateDocumentTool,
+  delete_document: deleteDocumentTool,
 }

@@ -13,4 +13,9 @@ const adapter = new PrismaBunSqlite({
 
 export const prisma = new PrismaClient({ adapter })
 
-export type { ChatSession, ChatMessage, BackgroundJob } from "../../prisma/generated/client.js"
+export type {
+  ChatSession,
+  ChatMessage,
+  BackgroundJob,
+  Document,
+} from "../../prisma/generated/client.js"

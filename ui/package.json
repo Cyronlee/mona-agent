@@ -20,6 +20,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@fontsource-variable/geist": "^5.2.9",
     "@iconify/react": "^6.0.2",
+    "@mdxeditor/editor": "^4.0.1",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@rive-app/react-webgl2": "^4.28.6",
     "@streamdown/cjk": "^1.0.3",

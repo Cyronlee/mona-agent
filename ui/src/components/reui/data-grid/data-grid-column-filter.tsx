@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/reui/badge"
-import { Column } from "@tanstack/react-table"
+import type { Column } from "@tanstack/react-table"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

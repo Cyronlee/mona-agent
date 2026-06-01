@@ -1,11 +1,12 @@
 "use client"
 
-import { HTMLAttributes, memo, ReactNode, useMemo } from "react"
+import { memo, useMemo } from "react"
+import type { HTMLAttributes, ReactNode } from "react"
 import {
   getColumnHeaderLabel,
   useDataGrid,
 } from "@/components/reui/data-grid/data-grid"
-import { Column } from "@tanstack/react-table"
+import type { Column } from "@tanstack/react-table"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

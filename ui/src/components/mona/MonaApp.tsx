@@ -1,6 +1,7 @@
 import { useAppStore } from "@/store/app-store"
 import { BottomBar } from "./BottomBar"
 import { DashboardView } from "./DashboardView"
+import { DocumentsView } from "./DocumentsView"
 import { LeftSidebar } from "./LeftSidebar"
 import { PlaceholderView } from "./PlaceholderView"
 import { RightPanel } from "./RightPanel"
@@ -14,9 +15,10 @@ function WorkspaceContent() {
     <div className="flex-1 overflow-y-auto p-5">
       {activeView === "dashboard" && <DashboardView />}
       {activeView === "tasks" && <TasksView />}
-      {(activeView === "documents" ||
-        activeView === "features" ||
-        activeView === "agents") && <PlaceholderView view={activeView} />}
+      {activeView === "documents" && <DocumentsView />}
+      {(activeView === "features" || activeView === "agents") && (
+        <PlaceholderView view={activeView} />
+      )}
     </div>
   )
 }

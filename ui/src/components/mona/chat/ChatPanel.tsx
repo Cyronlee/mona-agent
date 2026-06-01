@@ -14,14 +14,10 @@ import { PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Conversation as ConversationItem, ToolCall } from "./types"
 import type { UIMessage, ToolUIPart, DynamicToolUIPart } from "ai"
+import { fetchSessions } from "@/api-clients/chat"
+import type { SessionSummary } from "@/api-clients/chat"
 
 const API_BASE = "http://localhost:5679/api"
-
-interface SessionSummary {
-  id: string
-  title: string
-  updatedAt: string
-}
 
 interface MessageMeta {
   sessionId: string
@@ -39,11 +35,8 @@ function useSessionList() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/chat/sessions`)
-      if (res.ok) {
-        const data: SessionSummary[] = await res.json()
-        setSessions(data)
-      }
+      const data = await fetchSessions()
+      setSessions(data)
     } catch {
       // backend not running
     }

@@ -2,12 +2,12 @@
 
 import {
   memo,
-  ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react"
+import type { ReactNode } from "react"
 import { useDataGrid } from "@/components/reui/data-grid/data-grid"
 import {
   DataGridTableBase,
@@ -23,9 +23,10 @@ import {
   DataGridTableViewport,
   getDataGridTableRowSections,
 } from "@/components/reui/data-grid/data-grid-table"
-import { flexRender, HeaderGroup, Row, Table } from "@tanstack/react-table"
-import {
-  useVirtualizer,
+import { flexRender } from "@tanstack/react-table"
+import type { HeaderGroup, Row, Table } from "@tanstack/react-table"
+import { useVirtualizer } from "@tanstack/react-virtual"
+import type {
   VirtualItem,
   Virtualizer,
   VirtualizerOptions,
