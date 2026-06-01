@@ -34,6 +34,9 @@
 - **Tailwind CSS v4**：无 `tailwind.config.js`，使用 `@import "tailwindcss"` CSS 方式
 - **暗色模式**：按 `d` 键切换，存储在 `localStorage.theme`
 - **纯桌面端**，禁止移动端响应式
+- **图标库**：`@iconify/react`，图标集按需引入（如 `logos`、`lucide` 等）
+  - 用法：`import { Icon } from "@iconify/react"` → `<Icon icon="logos:github" />`
+  - 图标浏览：https://icon-sets.iconify.design/logos/
 
 ## 后端架构要点
 
