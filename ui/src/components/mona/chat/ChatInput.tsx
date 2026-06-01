@@ -55,9 +55,10 @@ const AttachmentsDisplay = () => {
 interface ChatInputProps {
   status: ChatStatus
   onSubmit: (message: PromptInputMessage) => void
+  onStop?: () => void
 }
 
-export function ChatInput({ status, onSubmit }: ChatInputProps) {
+export function ChatInput({ status, onSubmit, onStop }: ChatInputProps) {
   const [text, setText] = useState("")
 
   const handleTextChange = useCallback(
@@ -78,7 +79,8 @@ export function ChatInput({ status, onSubmit }: ChatInputProps) {
     [onSubmit],
   )
 
-  const isDisabled = !text.trim() || status === "streaming"
+  const isStreaming = status === "streaming" || status === "submitted"
+  const isDisabled = !text.trim() && !isStreaming
 
   return (
     <div className="px-3 pb-3 pt-2">
@@ -107,7 +109,7 @@ export function ChatInput({ status, onSubmit }: ChatInputProps) {
               variant="ghost"
             />
           </PromptInputTools>
-          <PromptInputSubmit disabled={isDisabled} status={status} />
+          <PromptInputSubmit disabled={isDisabled} status={status} onStop={onStop} />
         </PromptInputFooter>
       </PromptInput>
     </div>

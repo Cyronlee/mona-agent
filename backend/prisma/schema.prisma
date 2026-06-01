@@ -1,0 +1,39 @@
+generator client {
+  provider   = "prisma-client"
+  engineType = "client"
+  runtime    = "bun"
+  output     = "./generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  title     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id           String      @id @default(cuid())
+  sessionId    String
+  session      ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role         String      // "user" | "assistant" | "tool"
+  content      String
+  toolCallsJson String?    // JSON array of tool calls/results for this message
+  createdAt    DateTime    @default(now())
+}
+
+model BackgroundJob {
+  id        String   @id @default(cuid())
+  command   String
+  status    String   // "running" | "completed" | "failed"
+  cwd       String
+  pid       Int?
+  logs      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
