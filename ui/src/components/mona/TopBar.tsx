@@ -13,7 +13,7 @@ import { BellIcon, CircleHelpIcon, PanelLeftIcon, PanelRightIcon, SearchIcon } f
 const VIEW_LABELS: Record<ViewType, string> = {
   dashboard: "Dashboard",
   tasks: "Tasks",
-  assets: "Assets",
+  documents: "Documents",
   features: "Features",
   agents: "Agents",
 }

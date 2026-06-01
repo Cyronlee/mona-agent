@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-export type ViewType = "dashboard" | "tasks" | "assets" | "features" | "agents"
+export type ViewType = "dashboard" | "tasks" | "documents" | "features" | "agents"
 
 interface AppStore {
   activeView: ViewType

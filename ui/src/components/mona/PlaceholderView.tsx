@@ -5,10 +5,10 @@ const VIEW_CONFIG: Record<
   string,
   { icon: React.ReactNode; label: string; desc: string }
 > = {
-  assets: {
+  documents: {
     icon: <BoxIcon className="size-10 text-slate-300" />,
-    label: "Assets",
-    desc: "资产库功能即将上线，敬请期待",
+    label: "Documents",
+    desc: "文档库功能即将上线，敬请期待",
   },
   features: {
     icon: <GitBranchIcon className="size-10 text-slate-300" />,

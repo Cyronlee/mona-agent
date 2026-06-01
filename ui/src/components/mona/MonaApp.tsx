@@ -14,7 +14,7 @@ function WorkspaceContent() {
     <div className="flex-1 overflow-y-auto p-5">
       {activeView === "dashboard" && <DashboardView />}
       {activeView === "tasks" && <TasksView />}
-      {(activeView === "assets" ||
+      {(activeView === "documents" ||
         activeView === "features" ||
         activeView === "agents") && <PlaceholderView view={activeView} />}
     </div>

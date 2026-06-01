@@ -29,8 +29,8 @@ const NAV_ITEMS: {
     icon: <LayoutDashboardIcon className="size-4" />,
   },
   {
-    id: "assets",
-    label: "Assets",
+    id: "documents",
+    label: "Documents",
     icon: <BoxIcon className="size-4" />,
   },
   {
