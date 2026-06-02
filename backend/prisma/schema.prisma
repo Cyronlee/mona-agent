@@ -39,12 +39,51 @@ model BackgroundJob {
 }
 
 model Document {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   folder    String
   title     String
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  stories   StoryCard[]
 
   @@index([folder])
+}
+
+enum StoryStatus {
+  BACKLOG
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BLOCKED
+  CANCELLED
+}
+
+model StoryCard {
+  id         String      @id @default(cuid())
+  title      String
+  content    String      @default("")
+  status     StoryStatus @default(BACKLOG)
+  priority   String      @default("medium") // "urgent" | "high" | "medium" | "low"
+  documentId String?
+  document   Document?   @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  tags       String      @default("[]") // JSON array of tag strings
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  statusLogs StoryStatusLog[]
+
+  @@index([status])
+  @@index([documentId])
+}
+
+model StoryStatusLog {
+  id         String       @id @default(cuid())
+  cardId     String
+  card       StoryCard    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  fromStatus StoryStatus? // null means initial creation
+  toStatus   StoryStatus
+  createdAt  DateTime     @default(now())
+
+  @@index([cardId])
 }

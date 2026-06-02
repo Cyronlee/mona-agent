@@ -18,4 +18,7 @@ export type {
   ChatMessage,
   BackgroundJob,
   Document,
+  StoryCard,
+  StoryStatusLog,
+  StoryStatus,
 } from "../../prisma/generated/client.js"

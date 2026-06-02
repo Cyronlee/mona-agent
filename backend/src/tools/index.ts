@@ -300,6 +300,196 @@ export const deleteDocumentTool = tool({
   },
 })
 
+// ─── Tool: create_story_from_document ────────────────────────────────────────
+
+export const createStoryFromDocumentTool = tool({
+  description:
+    "Creates a StoryCard from an existing Document. Uses the document title as the default story title.",
+  parameters: z.object({
+    documentId: z.string().describe("The document ID to create a story from"),
+    title: z.string().optional().describe("Story title (defaults to document title)"),
+    priority: z
+      .enum(["urgent", "high", "medium", "low"])
+      .optional()
+      .describe("Story priority (default: medium)"),
+  }),
+  execute: async ({ documentId, title, priority }) => {
+    const document = await prisma.document.findUnique({ where: { id: documentId } })
+    if (!document) return { error: "Document not found" }
+
+    const story = await prisma.storyCard.create({
+      data: {
+        title: title ?? document.title,
+        content: "",
+        priority: priority ?? "medium",
+        documentId,
+        tags: "[]",
+      },
+    })
+
+    await prisma.storyStatusLog.create({
+      data: {
+        cardId: story.id,
+        fromStatus: null,
+        toStatus: "BACKLOG",
+      },
+    })
+
+    return story
+  },
+})
+
+// ─── Tool: create_story ───────────────────────────────────────────────────────
+
+export const createStoryTool = tool({
+  description: "Creates a new StoryCard directly.",
+  parameters: z.object({
+    title: z.string().describe("Story title"),
+    content: z.string().optional().describe("Story content (Markdown)"),
+    priority: z
+      .enum(["urgent", "high", "medium", "low"])
+      .optional()
+      .describe("Story priority (default: medium)"),
+    tags: z.array(z.string()).optional().describe("Array of tag strings"),
+  }),
+  execute: async ({ title, content, priority, tags }) => {
+    const story = await prisma.storyCard.create({
+      data: {
+        title,
+        content: content ?? "",
+        priority: priority ?? "medium",
+        tags: tags ? JSON.stringify(tags) : "[]",
+      },
+    })
+
+    await prisma.storyStatusLog.create({
+      data: {
+        cardId: story.id,
+        fromStatus: null,
+        toStatus: "BACKLOG",
+      },
+    })
+
+    return story
+  },
+})
+
+// ─── Tool: list_stories ───────────────────────────────────────────────────────
+
+export const listStoriesTool = tool({
+  description: "Lists all StoryCards, optionally filtered by status.",
+  parameters: z.object({
+    status: z
+      .enum(["BACKLOG", "IN_PROGRESS", "IN_REVIEW", "DONE", "BLOCKED", "CANCELLED"])
+      .optional()
+      .describe("Filter by status"),
+  }),
+  execute: async ({ status }) => {
+    const where = status ? { status } : undefined
+    const stories = await prisma.storyCard.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    })
+    return { stories, count: stories.length }
+  },
+})
+
+// ─── Tool: get_story ──────────────────────────────────────────────────────────
+
+export const getStoryTool = tool({
+  description: "Gets a single StoryCard by ID, including status history.",
+  parameters: z.object({
+    storyId: z.string().describe("The story card ID"),
+  }),
+  execute: async ({ storyId }) => {
+    const story = await prisma.storyCard.findUnique({
+      where: { id: storyId },
+      include: { statusLogs: { orderBy: { createdAt: "asc" } } },
+    })
+    if (!story) return { error: "Story not found" }
+    return story
+  },
+})
+
+// ─── Tool: update_story ───────────────────────────────────────────────────────
+
+export const updateStoryTool = tool({
+  description: "Updates story fields (title, content, priority, tags).",
+  parameters: z.object({
+    storyId: z.string().describe("The story card ID"),
+    title: z.string().optional().describe("New title"),
+    content: z.string().optional().describe("New content (Markdown)"),
+    priority: z
+      .enum(["urgent", "high", "medium", "low"])
+      .optional()
+      .describe("New priority"),
+    tags: z.array(z.string()).optional().describe("New tags array"),
+  }),
+  execute: async ({ storyId, title, content, priority, tags }) => {
+    const existing = await prisma.storyCard.findUnique({ where: { id: storyId } })
+    if (!existing) return { error: "Story not found" }
+
+    const story = await prisma.storyCard.update({
+      where: { id: storyId },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(content !== undefined && { content }),
+        ...(priority !== undefined && { priority }),
+        ...(tags !== undefined && { tags: JSON.stringify(tags) }),
+      },
+    })
+    return story
+  },
+})
+
+// ─── Tool: transition_story ───────────────────────────────────────────────────
+
+const STORY_ALLOWED: Record<string, string[]> = {
+  BACKLOG: ["IN_PROGRESS", "BLOCKED", "CANCELLED"],
+  IN_PROGRESS: ["BACKLOG", "IN_REVIEW", "BLOCKED", "CANCELLED"],
+  IN_REVIEW: ["IN_PROGRESS", "DONE", "BLOCKED", "CANCELLED"],
+  DONE: [],
+  BLOCKED: ["IN_PROGRESS", "CANCELLED"],
+  CANCELLED: [],
+}
+
+export const transitionStoryTool = tool({
+  description: "Transitions a StoryCard to a new status. Validates allowed transitions.",
+  parameters: z.object({
+    storyId: z.string().describe("The story card ID"),
+    status: z
+      .enum(["BACKLOG", "IN_PROGRESS", "IN_REVIEW", "DONE", "BLOCKED", "CANCELLED"])
+      .describe("The target status"),
+  }),
+  execute: async ({ storyId, status }) => {
+    const existing = await prisma.storyCard.findUnique({ where: { id: storyId } })
+    if (!existing) return { error: "Story not found" }
+
+    const fromStatus = existing.status
+    const allowed = STORY_ALLOWED[fromStatus] ?? []
+    if (!allowed.includes(status)) {
+      return {
+        error: `Transition from ${fromStatus} to ${status} is not allowed. Allowed: [${allowed.join(", ")}]`,
+      }
+    }
+
+    const story = await prisma.storyCard.update({
+      where: { id: storyId },
+      data: { status },
+    })
+
+    await prisma.storyStatusLog.create({
+      data: {
+        cardId: storyId,
+        fromStatus,
+        toStatus: status,
+      },
+    })
+
+    return story
+  },
+})
+
 export const agentTools = {
   read: readTool,
   write: writeTool,
@@ -309,4 +499,10 @@ export const agentTools = {
   get_document: getDocumentTool,
   update_document: updateDocumentTool,
   delete_document: deleteDocumentTool,
+  create_story_from_document: createStoryFromDocumentTool,
+  create_story: createStoryTool,
+  list_stories: listStoriesTool,
+  get_story: getStoryTool,
+  update_story: updateStoryTool,
+  transition_story: transitionStoryTool,
 }
