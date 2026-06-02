@@ -27,9 +27,7 @@ export function Dashboard({ projectSlug }: DashboardProps) {
         setFeatures(detail.features);
       })
       .catch(console.error);
-    getAllSuggestions(projectSlug)
-      .then(setSuggestions)
-      .catch(console.error);
+    getAllSuggestions(projectSlug).then(setSuggestions).catch(console.error);
   }, [projectSlug]);
 
   return (
@@ -59,7 +57,12 @@ export function Dashboard({ projectSlug }: DashboardProps) {
         >
           <PRDContent features={features.length > 0 ? features : undefined} />
         </main>
-        {rightPanelOpen && <RightPanel onClose={() => setRightPanelOpen(false)} />}
+        {rightPanelOpen && (
+          <RightPanel
+            onClose={() => setRightPanelOpen(false)}
+            projectSlug={projectSlug}
+          />
+        )}
       </div>
       <BottomBar />
     </div>
