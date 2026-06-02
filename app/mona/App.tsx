@@ -11,6 +11,10 @@ export default function App() {
   const [screen, setScreen] = useState<1 | 2 | 3 | 4>(1);
   const [projectIdea, setProjectIdea] = useState("");
 
+  if (screen === 4) {
+    return <Dashboard />;
+  }
+
   return (
     <div
       className="relative flex flex-col overflow-hidden"
@@ -22,7 +26,7 @@ export default function App() {
         minHeight: 812,
       }}
     >
-      {screen !== 4 && <Header />}
+      <Header />
       {screen === 1 && (
         <Screen1 onNext={(v) => { setProjectIdea(v); setScreen(2); }} />
       )}
@@ -31,9 +35,6 @@ export default function App() {
       )}
       {screen === 3 && (
         <Screen3 onDone={() => setScreen(4)} />
-      )}
-      {screen === 4 && (
-        <Dashboard />
       )}
     </div>
   );

@@ -1,7 +1,33 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import svgPaths from "../../assets/svgDashboard";
 
 const imgLogo = "/mona/logo.png";
+const RIGHT_PANEL_MIN_WIDTH = 280;
+const RIGHT_PANEL_MAX_WIDTH = 560;
+const RIGHT_PANEL_DEFAULT_WIDTH = 360;
+const RIGHT_PANEL_STORAGE_KEY = "mona-dashboard-right-panel-width";
+
+function getInitialRightPanelWidth() {
+  if (typeof window === "undefined") {
+    return RIGHT_PANEL_DEFAULT_WIDTH;
+  }
+
+  try {
+    const saved = window.localStorage.getItem(RIGHT_PANEL_STORAGE_KEY);
+    if (!saved) {
+      return RIGHT_PANEL_DEFAULT_WIDTH;
+    }
+
+    const parsed = Number.parseInt(saved, 10);
+    if (!Number.isNaN(parsed) && parsed >= RIGHT_PANEL_MIN_WIDTH && parsed <= RIGHT_PANEL_MAX_WIDTH) {
+      return parsed;
+    }
+  } catch {
+    // ignore localStorage failures
+  }
+
+  return RIGHT_PANEL_DEFAULT_WIDTH;
+}
 
 // ── Tiny icon helpers ─────────────────────────────────────────────────────────
 const pf = (d: string, stroke = "#0A0A0A") => (
@@ -25,12 +51,73 @@ function Svg16({ children }: { children: React.ReactNode }) {
 }
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
-function TopBar() {
+function SearchIcon() {
   return (
-    <div
-      className="flex items-center shrink-0 w-full"
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M6.41667 10.5C8.67283 10.5 10.5 8.67283 10.5 6.41667C10.5 4.1605 8.67283 2.33333 6.41667 2.33333C4.1605 2.33333 2.33333 4.1605 2.33333 6.41667C2.33333 8.67283 4.1605 10.5 6.41667 10.5Z" stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11.6667 11.6667L9.44922 9.44922" stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M10.5 4.95833C10.5 3.02534 8.93299 1.45833 7 1.45833C5.067 1.45833 3.5 3.02534 3.5 4.95833V6.64555C3.5 7.00641 3.36088 7.35337 3.11167 7.61258L2.33333 8.41667H11.6667L10.8883 7.61258C10.6391 7.35337 10.5 7.00641 10.5 6.64555V4.95833Z" stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.54167 10.5C5.72203 11.0426 6.25369 11.4167 6.83333 11.4167H7.16667C7.74631 11.4167 8.27797 11.0426 8.45833 10.5" stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function HelpIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M7 11.6667C9.57733 11.6667 11.6667 9.57733 11.6667 7C11.6667 4.42267 9.57733 2.33333 7 2.33333C4.42267 2.33333 2.33333 4.42267 2.33333 7C2.33333 9.57733 4.42267 11.6667 7 11.6667Z" stroke="#717182" strokeWidth="1.16667" />
+      <path d="M5.64648 5.60002C5.64648 4.85251 6.2523 4.24669 6.99982 4.24669C7.74733 4.24669 8.35315 4.85251 8.35315 5.60002C8.35315 6.18548 7.98061 6.68393 7.45964 6.86898C7.18964 6.96483 6.99982 7.21876 6.99982 7.50526V7.70002" stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" />
+      <path d="M7 9.33331H7.00583" stroke="#717182" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PanelToggleIcon({ side, open }: { side: "left" | "right"; open: boolean }) {
+  const arrowPoints = side === "left"
+    ? open ? "8.5 4 5.5 7 8.5 10" : "5.5 4 8.5 7 5.5 10"
+    : open ? "5.5 4 8.5 7 5.5 10" : "8.5 4 5.5 7 8.5 10";
+
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <rect x="2" y="2" width="10" height="10" rx="2" stroke="#717182" strokeWidth="1.16667" />
+      <path d={side === "left" ? "M5 2.5V11.5" : "M9 2.5V11.5"} stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" />
+      <polyline points={arrowPoints} stroke="#717182" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TopBar({
+  inboxCollapsed,
+  rightPanelOpen,
+  onToggleInbox,
+  onToggleRightPanel,
+}: {
+  inboxCollapsed: boolean;
+  rightPanelOpen: boolean;
+  onToggleInbox: () => void;
+  onToggleRightPanel: () => void;
+}) {
+  return (
+    <header
+      className="fixed inset-x-0 top-0 z-20 flex items-center gap-3 px-3 shrink-0 w-full"
       style={{ height: 48, borderBottom: "1px solid rgba(0,0,0,0.1)", background: "white" }}
     >
+      <button
+        onClick={onToggleInbox}
+        className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 transition-colors"
+        style={{ width: 28, height: 28, border: "1px solid rgba(0,0,0,0.08)" }}
+        aria-label={inboxCollapsed ? "Expand inbox" : "Collapse inbox"}
+      >
+        <PanelToggleIcon side="left" open={!inboxCollapsed} />
+      </button>
+
       {/* Logo cell */}
       <div
         className="flex items-center px-2 shrink-0"
@@ -40,68 +127,42 @@ function TopBar() {
       </div>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 px-3 flex-1">
+      <div className="flex items-center gap-1.5 px-1 shrink-0">
         <span className="text-[14px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>Project</span>
         <Svg12>{pf("M4.5 9L7.5 6L4.5 3", "#717182")}</Svg12>
         <span className="text-[14px] text-[#0a0a0a]" style={{ fontFamily: "Inter, sans-serif" }}>Acme feedback tool</span>
       </div>
 
-      {/* Sources cluster */}
       <div
-        className="flex items-center gap-1 px-3 shrink-0"
-        style={{ height: "100%", borderRight: "1px solid rgba(0,0,0,0.1)" }}
+        className="flex flex-1 items-center justify-center px-6"
       >
-        <span className="text-[12px] text-[#717182] mr-1" style={{ fontFamily: "Inter, sans-serif" }}>Sources</span>
-        {/* Video icon */}
-        <IconBtn>
-          <Svg12>
-            {pf(svgPaths.p3581cc00)}
-            {pf(svgPaths.p1b795000)}
-          </Svg12>
-          <OrangeDot />
-        </IconBtn>
-        {/* Calendar icon */}
-        <IconBtn>
-          <Svg12>
-            {pf("M4 1V3")}
-            {pf("M8 1V3")}
-            {pf(svgPaths.p333d5300)}
-            {pf("M1.5 5H10.5")}
-          </Svg12>
-          <OrangeDot />
-        </IconBtn>
-        {/* Mail icon - dimmed */}
-        <IconBtn dimmed>
-          <Svg12>
-            {pf("M11 6H1", "#0A0A0A")}
-            {pf(svgPaths.p1a703e00)}
-            {pf("M3 8H3.005")}
-            {pf("M5 8H5.005")}
-          </Svg12>
-        </IconBtn>
-        {/* Document icon */}
-        <IconBtn>
-          <Svg12>
-            {pf(svgPaths.p17c66200)}
-            {pf(svgPaths.p31eedf00)}
-            {pf("M5 4.5H4")}
-            {pf("M8 6.5H4")}
-            {pf("M8 8.5H4")}
-          </Svg12>
-          <OrangeDot />
-        </IconBtn>
-        {/* Plus */}
         <div
-          className="flex items-center justify-center rounded-[8px]"
-          style={{ width: 24, height: 24, border: "1px dashed rgba(0,0,0,0.1)" }}
+          className="flex h-8 w-full max-w-[320px] items-center gap-2 rounded-[10px] px-3"
+          style={{ background: "rgba(241,245,249,0.9)", border: "1px solid rgba(0,0,0,0.06)" }}
         >
-          <Svg12>{pf("M2.5 6H9.5", "#717182")}{pf("M6 2.5V9.5", "#717182")}</Svg12>
+          <SearchIcon />
+          <span className="text-[12px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>
+            搜索文档、任务 (⌘K)
+          </span>
         </div>
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-2 px-3 shrink-0">
-        {/* Share */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button className="flex items-center justify-center rounded-[8px] hover:bg-gray-50" style={{ width: 28, height: 28 }} aria-label="Notifications">
+          <BellIcon />
+        </button>
+        <button className="flex items-center justify-center rounded-[8px] hover:bg-gray-50" style={{ width: 28, height: 28 }} aria-label="Help">
+          <HelpIcon />
+        </button>
+        <button
+          onClick={onToggleRightPanel}
+          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 transition-colors"
+          style={{ width: 28, height: 28, border: "1px solid rgba(0,0,0,0.08)" }}
+          aria-label={rightPanelOpen ? "Collapse AI panel" : "Expand AI panel"}
+        >
+          <PanelToggleIcon side="right" open={rightPanelOpen} />
+        </button>
         <button
           className="flex items-center gap-1 px-2 rounded-[8px] text-[12px] text-[#0a0a0a] cursor-pointer hover:bg-gray-50"
           style={{ height: 28, border: "1px solid rgba(0,0,0,0.1)", fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
@@ -123,32 +184,33 @@ function TopBar() {
           </Svg14>
         </button>
       </div>
+    </header>
+  );
+}
+
+function AgentStatusDot({ color, label, initials }: { color: string; label: string; initials: string }) {
+  return (
+    <div className="flex items-center gap-1.5" title={label}>
+      <div className="relative flex items-center justify-center rounded-full text-[8px] text-white" style={{ width: 16, height: 16, background: color, fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>
+        {initials}
+        <span className="absolute -bottom-[1px] -right-[1px] rounded-full border border-[#f8fafc]" style={{ width: 6, height: 6, background: label === "Busy" ? "#facc15" : label === "Online" ? "#4ade80" : "#94a3b8" }} />
+      </div>
     </div>
   );
 }
 
-function OrangeDot() {
+function BottomBar() {
   return (
-    <div
-      className="absolute rounded-full"
-      style={{ width: 6, height: 6, background: "#FF7F26", opacity: 0.51, top: -0.5, right: -1 }}
-    />
-  );
-}
-
-function IconBtn({ children, dimmed }: { children: React.ReactNode; dimmed?: boolean }) {
-  return (
-    <div
-      className="relative flex items-center justify-center rounded-[8px] cursor-pointer hover:bg-gray-50"
-      style={{
-        width: 24, height: 24,
-        background: dimmed ? "rgba(236,236,240,0.4)" : "white",
-        border: "1px solid rgba(0,0,0,0.1)",
-        opacity: dimmed ? 0.5 : 1,
-      }}
-    >
-      {children}
-    </div>
+    <footer className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-between px-3" style={{ height: 28, borderTop: "1px solid rgba(0,0,0,0.08)", background: "#f8fafc" }}>
+      <span className="text-[10px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>
+        Last sync: 2 mins ago
+      </span>
+      <div className="flex items-center gap-1.5">
+        <AgentStatusDot color="#7c3aed" label="Online" initials="O" />
+        <AgentStatusDot color="#2563eb" label="Busy" initials="P" />
+        <AgentStatusDot color="#0f766e" label="Idle" initials="B" />
+      </div>
+    </footer>
   );
 }
 
@@ -272,12 +334,12 @@ function InboxPanel({ collapsed, onToggle }: { collapsed: boolean; onToggle: () 
 
   return (
     <div
-      className="flex flex-col shrink-0 overflow-y-auto"
+      className="flex h-full flex-col shrink-0 overflow-y-auto"
       style={{
         width: 220,
         background: "#dfe3e8",
         borderRight: "1px solid rgba(0,0,0,0.1)",
-        height: "100vh",
+        height: "100%",
       }}
     >
       {/* Inbox header */}
@@ -443,6 +505,134 @@ function InboxPanel({ collapsed, onToggle }: { collapsed: boolean; onToggle: () 
         </div>
       </div>
     </div>
+  );
+}
+
+function RightPanel({ onClose }: { onClose: () => void }) {
+  const [width, setWidth] = useState(getInitialRightPanelWidth);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(RIGHT_PANEL_DEFAULT_WIDTH);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(RIGHT_PANEL_STORAGE_KEY, String(width));
+    } catch {
+      // ignore localStorage failures
+    }
+  }, [width]);
+
+  const onMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    dragging.current = true;
+    startX.current = event.clientX;
+    startWidth.current = width;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!dragging.current) {
+        return;
+      }
+
+      const delta = startX.current - moveEvent.clientX;
+      const nextWidth = Math.min(
+        RIGHT_PANEL_MAX_WIDTH,
+        Math.max(RIGHT_PANEL_MIN_WIDTH, startWidth.current + delta),
+      );
+      setWidth(nextWidth);
+    };
+
+    const onMouseUp = () => {
+      dragging.current = false;
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, [width]);
+
+  return (
+    <aside
+      className="relative flex h-full shrink-0 flex-col overflow-hidden"
+      style={{ width, borderLeft: "1px solid rgba(0,0,0,0.08)", background: "#ffffff" }}
+    >
+      <div
+        className="absolute inset-y-0 left-0 z-10 cursor-col-resize"
+        style={{ width: 8 }}
+        onMouseDown={onMouseDown}
+      >
+        <div className="absolute inset-y-0 left-[3px] w-px" style={{ background: "rgba(0,0,0,0.08)" }} />
+      </div>
+
+      <div className="flex items-center justify-between shrink-0 pl-4 pr-3" style={{ height: 40, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full" style={{ width: 6, height: 6, background: "#4ade80" }} />
+          <span className="text-[12px] text-[#0a0a0a]" style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>
+            AI Chat
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50"
+          style={{ width: 24, height: 24 }}
+          aria-label="Close AI panel"
+        >
+          <Svg14>
+            <path d="M10.5 3.5L3.5 10.5" stroke="#717182" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.5 3.5L10.5 10.5" stroke="#717182" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg14>
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4" style={{ background: "#fcfcfd" }}>
+        <div className="mb-4 rounded-[14px] p-3" style={{ background: "#f8fafc", border: "1px solid rgba(0,0,0,0.06)" }}>
+          <p className="mb-1 text-[11px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>Mona Active</p>
+          <p className="text-[13px] text-[#0a0a0a]" style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}>
+            Reviewing inbox suggestions and aligning PRD updates with design tasks.
+          </p>
+        </div>
+
+        {[
+          {
+            name: "Planner",
+            status: "Working on synthesis",
+            detail: "Clustered 12 stakeholder notes into three candidate backlog themes.",
+          },
+          {
+            name: "Builder",
+            status: "Waiting for decision",
+            detail: "Needs confirmation on whether search should live in top nav or feed filters.",
+          },
+          {
+            name: "Reviewer",
+            status: "Ready",
+            detail: "Can generate acceptance criteria after the selected suggestion is approved.",
+          },
+        ].map((item) => (
+          <div key={item.name} className="mb-3 rounded-[14px] p-3" style={{ background: "white", border: "1px solid rgba(0,0,0,0.06)" }}>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="text-[12px] text-[#0a0a0a]" style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}>
+                {item.name}
+              </span>
+              <span className="text-[10px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>
+                {item.status}
+              </span>
+            </div>
+            <p className="text-[12px] text-[#4b5563]" style={{ fontFamily: "Poppins, sans-serif" }}>
+              {item.detail}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="shrink-0 p-3" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", background: "white" }}>
+        <div className="rounded-[12px] px-3 py-2" style={{ border: "1px solid rgba(0,0,0,0.08)", background: "#f8fafc" }}>
+          <p className="text-[12px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>
+            Ask Mona to apply a selected inbox suggestion to the PRD.
+          </p>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -793,14 +983,24 @@ function PRDContent() {
 // ── Dashboard root ────────────────────────────────────────────────────────────
 export function Dashboard() {
   const [inboxCollapsed, setInboxCollapsed] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
 
   return (
-    <div className="flex flex-col size-full" style={{ background: "white", minHeight: 0 }}>
-      <TopBar />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex h-screen w-screen flex-col overflow-hidden" style={{ background: "#ffffff", minHeight: 0 }}>
+      <TopBar
+        inboxCollapsed={inboxCollapsed}
+        rightPanelOpen={rightPanelOpen}
+        onToggleInbox={() => setInboxCollapsed(!inboxCollapsed)}
+        onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
+      />
+      <div className="flex flex-1 overflow-hidden" style={{ marginTop: 48, marginBottom: 28 }}>
         <InboxPanel collapsed={inboxCollapsed} onToggle={() => setInboxCollapsed(!inboxCollapsed)} />
-        <PRDContent />
+        <main className="flex flex-1 overflow-hidden" style={{ background: "#ffffff" }}>
+          <PRDContent />
+        </main>
+        {rightPanelOpen && <RightPanel onClose={() => setRightPanelOpen(false)} />}
       </div>
+      <BottomBar />
     </div>
   );
 }
