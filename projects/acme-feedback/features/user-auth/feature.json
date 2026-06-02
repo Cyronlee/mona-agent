@@ -1,0 +1,8 @@
+{
+    "slug": "user-auth",
+    "title": "User Authentication & Profile",
+    "desc": "Secure sign-up, login, session management, and user profile editing.",
+    "status": "done",
+    "order": 2,
+    "updatedAt": "2026-06-01"
+}

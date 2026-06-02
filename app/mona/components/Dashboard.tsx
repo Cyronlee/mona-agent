@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import svgPaths from "../../assets/svgDashboard";
+import { getProjectDetail, getAllSuggestions } from "../api/projects";
+import type { FeatureSummary, AggregatedSuggestion } from "../api/projects";
 
 const imgLogo = "/mona/logo.png";
 const RIGHT_PANEL_MIN_WIDTH = 280;
@@ -98,11 +100,13 @@ function TopBar({
   rightPanelOpen,
   onToggleInbox,
   onToggleRightPanel,
+  projectTitle,
 }: {
   inboxCollapsed: boolean;
   rightPanelOpen: boolean;
   onToggleInbox: () => void;
   onToggleRightPanel: () => void;
+  projectTitle: string;
 }) {
   return (
     <header
@@ -130,7 +134,7 @@ function TopBar({
       <div className="flex items-center gap-1.5 px-1 shrink-0">
         <span className="text-[14px] text-[#717182]" style={{ fontFamily: "Inter, sans-serif" }}>Project</span>
         <Svg12>{pf("M4.5 9L7.5 6L4.5 3", "#717182")}</Svg12>
-        <span className="text-[14px] text-[#0a0a0a]" style={{ fontFamily: "Inter, sans-serif" }}>Acme feedback tool</span>
+        <span className="text-[14px] text-[#0a0a0a]" style={{ fontFamily: "Inter, sans-serif" }}>{projectTitle}</span>
       </div>
 
       <div
@@ -256,7 +260,7 @@ function CodeIcon({ color }: { color: string }) {
 }
 
 // ── Left sidebar (Inbox) ──────────────────────────────────────────────────────
-function InboxPanel({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function InboxPanel({ collapsed, onToggle, suggestions: apiSuggestions }: { collapsed: boolean; onToggle: () => void; suggestions?: AggregatedSuggestion[] }) {
   const [dismissed, setDismissed] = useState<number[]>([]);
 
   // Collapsed view
@@ -315,20 +319,27 @@ function InboxPanel({ collapsed, onToggle }: { collapsed: boolean; onToggle: () 
   }
 
   // Expanded view
-  const suggestions = [
-    {
-      id: 0,
-      tag: "Sign Up",
-      title: "Henry Howarth suggest to replace the old NPS prompt with the new 1–5 rating.",
-      action: "Swap NPS prompt → 1–5 rating",
-    },
-    {
-      id: 1,
-      tag: "NPS prompt",
-      title: "Henry Howarth suggest to help user to find the item more quickly.",
-      action: "Add global search + filter",
-    },
-  ];
+  const suggestions = apiSuggestions
+    ? apiSuggestions.map((s, i) => ({
+      id: i,
+      tag: s.featureTitle,
+      title: s.desc ?? s.title,
+      action: s.title,
+    }))
+    : [
+      {
+        id: 0,
+        tag: "Sign Up",
+        title: "Henry Howarth suggest to replace the old NPS prompt with the new 1–5 rating.",
+        action: "Swap NPS prompt → 1–5 rating",
+      },
+      {
+        id: 1,
+        tag: "NPS prompt",
+        title: "Henry Howarth suggest to help user to find the item more quickly.",
+        action: "Add global search + filter",
+      },
+    ];
 
   const monaNote = "Add a global search function, and a global filter.";
 
@@ -714,8 +725,15 @@ const DESIGN_FEATURES = [
   { name: "Sign Up", count: 3, status: "WIP" },
 ];
 
-function DesignContent() {
+function DesignContent({ features: apiFeatures }: { features?: FeatureSummary[] }) {
   const [activeDesignTab, setActiveDesignTab] = useState("Prototype");
+  const displayFeatures = apiFeatures
+    ? apiFeatures.map((f) => ({
+      name: f.title,
+      count: f.storyCount,
+      status: (f.status === "done" ? "Done" : f.status === "paused" ? "Paused" : "WIP") as "Done" | "WIP" | "Paused",
+    }))
+    : DESIGN_FEATURES;
 
   return (
     <div className="flex flex-1 overflow-hidden" style={{ background: "#f6f6f9", padding: 16, gap: 16 }}>
@@ -725,12 +743,12 @@ function DesignContent() {
           <div className="flex items-center gap-2">
             <ToolBoxIcon />
             <span className="text-[14px] text-[#0a0a0a]" style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}>Feature</span>
-            <span className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]" style={{ background: "#eceef2", height: 22, fontFamily: "Inter, sans-serif", fontWeight: 500 }}>7</span>
+            <span className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]" style={{ background: "#eceef2", height: 22, fontFamily: "Inter, sans-serif", fontWeight: 500 }}>{displayFeatures.length}</span>
           </div>
           <button className="hover:opacity-70"><Svg14><path d={svgPaths.pc990c00} fill="#717182" /></Svg14></button>
         </div>
         <div className="flex flex-col p-4 gap-2">
-          {DESIGN_FEATURES.map(f => (
+          {displayFeatures.map(f => (
             <div key={f.name} className="flex items-center gap-2 p-2 rounded-[10px] border border-[rgba(0,0,0,0.1)] hover:bg-gray-50 cursor-pointer transition-colors">
               <StatusIcon type={f.status as any} />
               <span className="flex-1 text-[14px] text-[#0a0a0a] truncate" style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}>{f.name}</span>
@@ -797,10 +815,13 @@ function DesignContent() {
   );
 }
 
-function PRDContent() {
+function PRDContent({ features: apiFeatures }: { features?: FeatureSummary[] }) {
   const [activeNav, setActiveNav] = useState("Feature Requirements");
   const [activeTab, setActiveTab] = useState("PRD");
-  const [expanded, setExpanded] = useState<string[]>(["The Global Marketplace Feed ("]);
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const displayFeatures = apiFeatures
+    ? apiFeatures.map((f) => ({ name: f.title, count: f.storyCount, expanded: false, items: undefined as undefined }))
+    : FEATURES;
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden" style={{ background: "white" }}>
@@ -903,7 +924,7 @@ function PRDContent() {
                   className="px-2 rounded-[6px] text-[13px] text-[#0a0a0a]"
                   style={{ background: "#f0f0f5", fontFamily: "Inter, sans-serif", fontWeight: 500 }}
                 >
-                  7
+                  {displayFeatures.length}
                 </span>
                 <div className="flex-1" />
                 <button className="hover:opacity-70">
@@ -913,7 +934,7 @@ function PRDContent() {
 
               {/* Feature rows */}
               <div className="flex flex-col" style={{ borderTop: "1px solid #e5e7eb" }}>
-                {FEATURES.map((f) => (
+                {displayFeatures.map((f) => (
                   <div key={f.name} style={{ borderBottom: "1px solid #e5e7eb" }}>
                     {/* Row */}
                     <button
@@ -969,7 +990,7 @@ function PRDContent() {
             </div>
           </>
         ) : activeTab === "Design" ? (
-          <DesignContent />
+          <DesignContent features={apiFeatures} />
         ) : (
           <div className="flex-1 flex items-center justify-center text-[#717182]" style={{ fontFamily: "Poppins, sans-serif" }}>
             {activeTab} Content (Placeholder)
@@ -981,9 +1002,24 @@ function PRDContent() {
 }
 
 // ── Dashboard root ────────────────────────────────────────────────────────────
-export function Dashboard() {
+export function Dashboard({ projectSlug }: { projectSlug: string }) {
   const [inboxCollapsed, setInboxCollapsed] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [projectTitle, setProjectTitle] = useState("Acme feedback tool");
+  const [features, setFeatures] = useState<FeatureSummary[]>([]);
+  const [suggestions, setSuggestions] = useState<AggregatedSuggestion[]>([]);
+
+  useEffect(() => {
+    getProjectDetail(projectSlug)
+      .then((detail) => {
+        setProjectTitle(detail.meta.title);
+        setFeatures(detail.features);
+      })
+      .catch(console.error);
+    getAllSuggestions(projectSlug)
+      .then(setSuggestions)
+      .catch(console.error);
+  }, [projectSlug]);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden" style={{ background: "#ffffff", minHeight: 0 }}>
@@ -992,11 +1028,16 @@ export function Dashboard() {
         rightPanelOpen={rightPanelOpen}
         onToggleInbox={() => setInboxCollapsed(!inboxCollapsed)}
         onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
+        projectTitle={projectTitle}
       />
       <div className="flex flex-1 overflow-hidden" style={{ marginTop: 48, marginBottom: 28 }}>
-        <InboxPanel collapsed={inboxCollapsed} onToggle={() => setInboxCollapsed(!inboxCollapsed)} />
+        <InboxPanel
+          collapsed={inboxCollapsed}
+          onToggle={() => setInboxCollapsed(!inboxCollapsed)}
+          suggestions={suggestions.length > 0 ? suggestions : undefined}
+        />
         <main className="flex flex-1 overflow-hidden" style={{ background: "#ffffff" }}>
-          <PRDContent />
+          <PRDContent features={features.length > 0 ? features : undefined} />
         </main>
         {rightPanelOpen && <RightPanel onClose={() => setRightPanelOpen(false)} />}
       </div>

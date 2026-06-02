@@ -1,0 +1,8 @@
+{
+    "slug": "acme-feedback",
+    "title": "Acme Feedback Tool",
+    "desc": "A feedback collection and synthesis platform for Acme Corp's global product team.",
+    "status": "active",
+    "createdAt": "2026-05-01",
+    "updatedAt": "2026-06-03"
+}

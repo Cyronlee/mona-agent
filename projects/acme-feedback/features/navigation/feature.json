@@ -1,0 +1,8 @@
+{
+    "slug": "navigation",
+    "title": "Navigation Bar",
+    "desc": "Bottom navigation bar with quick-access tabs for Feed, Search, Messages, Orders, and Profile.",
+    "status": "done",
+    "order": 5,
+    "updatedAt": "2026-06-01"
+}

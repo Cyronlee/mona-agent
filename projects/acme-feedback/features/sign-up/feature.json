@@ -1,0 +1,8 @@
+{
+    "slug": "sign-up",
+    "title": "Sign Up",
+    "desc": "New user registration flow including email verification and role selection (buyer/seller).",
+    "status": "in-progress",
+    "order": 6,
+    "updatedAt": "2026-06-03"
+}

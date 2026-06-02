@@ -12,7 +12,7 @@ export default function App() {
   const [projectIdea, setProjectIdea] = useState("");
 
   if (screen === 4) {
-    return <Dashboard />;
+    return <Dashboard projectSlug="acme-feedback" />;
   }
 
   return (
