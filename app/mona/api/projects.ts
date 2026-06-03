@@ -20,6 +20,7 @@ export type FeatureSummary = {
     order: number
     storyCount: number
     suggestionCount: number
+    stories: StorySummary[]
 }
 
 export type ProjectDetail = {

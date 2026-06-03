@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { useResizableWidth } from "./useResizableWidth";
 import { ChatPanel } from "../chat/ChatPanel";
 
@@ -56,20 +57,7 @@ export function RightPanel({ onClose, projectSlug }: RightPanelProps) {
         style={{ width: 24, height: 24 }}
         aria-label="Close chat panel"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path
-            d="M10.5 3.5L3.5 10.5"
-            stroke="#717182"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M3.5 3.5L10.5 10.5"
-            stroke="#717182"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Icon icon="lucide:x" width={14} height={14} color="#717182" />
       </button>
       <ChatPanel projectSlug={projectSlug} />
     </aside>

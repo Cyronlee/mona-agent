@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import svgPaths from "../../../assets/svgDashboard";
-import { Svg12, Svg14, pf } from "./icons";
+import { Icon } from "@iconify/react";
 import {
   BellIcon,
   HelpIcon,
@@ -113,16 +112,14 @@ export function TopBar({
           >
             Project
           </span>
-          <Svg12>{pf("M4.5 9L7.5 6L4.5 3", "#717182")}</Svg12>
+          <Icon icon="lucide:chevron-right" width={12} height={12} color="#717182" />
           <span
             className="text-[14px] text-[#0a0a0a]"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             {projectTitle}
           </span>
-          <Svg12>
-            {pf("M2.5 4.5L6 8L9.5 4.5", projectMenuOpen ? "#0a0a0a" : "#717182")}
-          </Svg12>
+          <Icon icon="lucide:chevron-down" width={12} height={12} color={projectMenuOpen ? "#0a0a0a" : "#717182"} />
         </button>
 
         {projectMenuOpen && (
@@ -182,9 +179,7 @@ export function TopBar({
                       {p.title}
                     </span>
                     {selected && (
-                      <Svg12>
-                        {pf("M2 6.5L4.8 9.2L10 3.5", "#1e2340")}
-                      </Svg12>
+                      <Icon icon="lucide:check" width={12} height={12} color="#1e2340" />
                     )}
                   </button>
                 );
@@ -216,7 +211,7 @@ export function TopBar({
                   "transparent";
               }}
             >
-              <Svg12>{pf("M6 2V10", "#1e2340")}{pf("M2 6H10", "#1e2340")}</Svg12>
+              <Icon icon="lucide:plus" width={12} height={12} color="#1e2340" />
               <span
                 className="text-[13px]"
                 style={{
@@ -286,13 +281,7 @@ export function TopBar({
             fontWeight: 500,
           }}
         >
-          <Svg12>
-            {pf(svgPaths.pd38a270)}
-            {pf(svgPaths.p21de3c80)}
-            {pf(svgPaths.p36cd3c0)}
-            {pf("M4.295 6.755L7.71 8.745")}
-            {pf("M7.705 3.255L4.295 5.245")}
-          </Svg12>
+          <Icon icon="lucide:share" width={12} height={12} color="#717182" />
           Share
         </button>
         <button
@@ -300,22 +289,7 @@ export function TopBar({
           style={{ width: 28, height: 28 }}
           aria-label="Settings"
         >
-          <Svg14>
-            <path
-              d={svgPaths.p1eaef80}
-              stroke="#717182"
-              strokeWidth="1.16667"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d={svgPaths.p4c1f200}
-              stroke="#717182"
-              strokeWidth="1.16667"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg14>
+          <Icon icon="lucide:settings" width={14} height={14} color="#717182" />
         </button>
       </div>
     </header>

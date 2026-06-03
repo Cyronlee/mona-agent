@@ -1,10 +1,12 @@
 import type { FeatureSummary } from "../../api/projects";
 
+export type StoryStatus = "in-progress" | "todo";
+
 export type FeatureRow = {
   name: string;
   count: number;
   expanded: boolean;
-  items?: { num: string; priority: number; label: string }[];
+  items?: { num: string; priority: number; label: string; status?: StoryStatus }[];
 };
 
 export const PRD_NAV = [
@@ -28,10 +30,10 @@ export const FALLBACK_FEATURES: FeatureRow[] = [
     count: 3,
     expanded: true,
     items: [
-      { num: "037", priority: 1, label: "Explore Tab (Curated Feed)" },
-      { num: "038", priority: 1, label: "Feed Filtering (Country & Category)" },
-      { num: "026", priority: 2, label: "Item Detail Redirection (Interaction)" },
-      { num: "025", priority: 1, label: "Keyword Search" },
+      { num: "037", priority: 1, label: "Explore Tab (Curated Feed)", status: "in-progress" as const },
+      { num: "038", priority: 1, label: "Feed Filtering (Country & Category)", status: "in-progress" as const },
+      { num: "026", priority: 2, label: "Item Detail Redirection (Interaction)", status: "todo" as const },
+      { num: "025", priority: 1, label: "Keyword Search", status: "todo" as const },
     ],
   },
   { name: "User Authentication & Profile", count: 3, expanded: false },

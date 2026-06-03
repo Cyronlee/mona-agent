@@ -1,7 +1,6 @@
 import { useState } from "react";
-import svgPaths from "../../../assets/svgDashboard";
+import { Icon } from "@iconify/react";
 import type { AggregatedSuggestion } from "../../api/projects";
-import { Svg12, Svg14, Svg16, pf } from "./icons";
 
 type Suggestion = {
   id: number;
@@ -76,20 +75,7 @@ function SuggestionCard({
           </span>
         </div>
         <button onClick={onDismiss} className="hover:opacity-70">
-          <Svg16>
-            <path
-              d="M12 4L4 12"
-              stroke="#002557"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M4 4L12 12"
-              stroke="#002557"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg16>
+          <Icon icon="lucide:x" width={16} height={16} color="#002557" />
         </button>
       </div>
       <p
@@ -120,24 +106,24 @@ function SuggestionCard({
               fontFamily: "Poppins, sans-serif",
               fontWeight: 500,
             }}
-          >
-            <Svg12>{pf("M10 3L4.5 8.5L2 6", "#FF7F26")}</Svg12>
-            Yes
-          </button>
-          <button
-            className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557]"
-            style={{
-              background: "white",
-              height: 28,
-              border: "1px solid rgba(0,37,87,0.6)",
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 500,
-            }}
-          >
-            Blocked
-          </button>
-        </div>
+        >
+          <Icon icon="lucide:check" width={12} height={12} color="#FF7F26" />
+          Yes
+        </button>
+        <button
+          className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557]"
+          style={{
+            background: "white",
+            height: 28,
+            border: "1px solid rgba(0,37,87,0.6)",
+            fontFamily: "Poppins, sans-serif",
+            fontWeight: 500,
+          }}
+        >
+          Blocked
+        </button>
       </div>
+    </div>
     </div>
   );
 }
@@ -170,7 +156,7 @@ function MonaNoteCard() {
             fontWeight: 500,
           }}
         >
-          <Svg12>{pf("M10 3L4.5 8.5L2 6", "#FF7F26")}</Svg12>
+          <Icon icon="lucide:check" width={12} height={12} color="#FF7F26" />
           Yes
         </button>
         <button
@@ -194,9 +180,7 @@ function MonaNoteCard() {
             border: "1px solid rgba(0,0,0,0.1)",
           }}
         >
-          <Svg16>
-            <path d={svgPaths.p14780cf0} fill="#002557" />
-          </Svg16>
+          <Icon icon="lucide:more-horizontal" width={16} height={16} color="#002557" />
         </button>
       </div>
     </div>
@@ -249,9 +233,7 @@ function MonkeyAvatar() {
         className="flex items-center justify-center rounded-full cursor-pointer hover:opacity-90"
         style={{ width: 36, height: 36, background: "#002557" }}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d={svgPaths.p1e43ddf2} fill="#FF7F26" />
-        </svg>
+        <Icon icon="lucide:bot" width={20} height={20} color="#FF7F26" />
       </div>
     </div>
   );
@@ -270,9 +252,7 @@ function CollapsedInbox() {
       }}
     >
       <div className="flex flex-col gap-2 items-center pt-2 px-2">
-        <Svg16>
-          <path d={svgPaths.p2f778600} fill="#1C1B1F" />
-        </Svg16>
+        <Icon icon="lucide:inbox" width={16} height={16} color="#1C1B1F" />
 
         <div className="flex items-center justify-center h-[37px] w-[17px]">
           <div className="-rotate-90 flex-none">
@@ -327,9 +307,7 @@ function ExpandedInbox({
         style={{ height: 40, borderBottom: "1px solid rgba(0,0,0,0.1)" }}
       >
         <div className="flex items-center gap-1">
-          <Svg16>
-            <path d={svgPaths.p2f778600} fill="#1C1B1F" />
-          </Svg16>
+          <Icon icon="lucide:inbox" width={16} height={16} color="#1C1B1F" />
           <span
             className="text-[14px] text-[#0a0a0a]"
             style={{ fontFamily: "Inter, sans-serif" }}

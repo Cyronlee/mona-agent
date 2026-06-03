@@ -134,14 +134,27 @@ function buildFeatureSummary(projectSlug: string, featureSlug: string): FeatureS
     if (!parsed?.success) return null
 
     const fm = parsed.data
+    const storySlugs = listMdSlugs(path.join(featureDir, "story"))
+    const stories: StorySummary[] = storySlugs
+        .map((slug): StorySummary | null => {
+            const doc = safeReadMd(path.join(featureDir, "story", `${slug}.md`))
+            if (!doc) return null
+            const sfm = StoryFrontmatterSchema.safeParse(doc.data)
+            if (!sfm.success) return null
+            return { slug, title: sfm.data.title, desc: sfm.data.desc, status: sfm.data.status, priority: sfm.data.priority, order: sfm.data.order }
+        })
+        .filter((s): s is StorySummary => s !== null)
+        .sort((a, b) => (a.order ?? 99) - (b.order ?? 99))
+
     return {
         slug: fm.slug,
         title: fm.title,
         desc: fm.desc,
         status: fm.status,
         order: fm.order,
-        storyCount: listMdSlugs(path.join(featureDir, "story")).length,
+        storyCount: storySlugs.length,
         suggestionCount: listMdSlugs(path.join(featureDir, "suggestions")).length,
+        stories,
     }
 }
 

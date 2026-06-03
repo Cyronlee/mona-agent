@@ -1,9 +1,9 @@
 import { useState } from "react";
-import svgPaths from "../../../assets/svgDashboard";
+import { Icon } from "@iconify/react";
 import type { FeatureSummary } from "../../api/projects";
-import { Svg12, Svg14, pf } from "./icons";
 import { ToolBoxIcon } from "./dashboardIcons";
 import { DesignContent } from "./DesignContent";
+import { FeaturesContent } from "./FeaturesContent";
 import {
   PRD_NAV,
   toPrdFeatures,
@@ -11,80 +11,30 @@ import {
 } from "./prdData";
 
 function EyeIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path
-        d="M11.0833 1.75H2.91667C2.27233 1.75 1.75 2.27233 1.75 2.91667V11.0833C1.75 11.7277 2.27233 12.25 2.91667 12.25H11.0833C11.7277 12.25 12.25 11.7277 12.25 11.0833V2.91667C12.25 2.27233 11.7277 1.75 11.0833 1.75Z"
-        stroke={color}
-        strokeWidth="1.16667"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8.75 1.75V12.25"
-        stroke={color}
-        strokeWidth="1.16667"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.66667 5.25L6.41667 7L4.66667 8.75"
-        stroke={color}
-        strokeWidth="1.16667"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <Icon icon="lucide:eye" width={14} height={14} color={color} />;
 }
 
 function FileTextIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path
-        d="M4.08333 1.16667C3.43583 1.16667 2.91667 1.68583 2.91667 2.33333V11.6667C2.91667 12.3142 3.43583 12.8333 4.08333 12.8333H9.91667C10.5642 12.8333 11.0833 12.3142 11.0833 11.6667V4.08333L8.16667 1.16667H4.08333ZM4.08333 2.33333H7.58333V4.66667H9.91667V11.6667H4.08333V2.33333ZM5.25 5.83333V7H8.75V5.83333H5.25ZM5.25 8.16667V9.33333H8.75V8.16667H5.25Z"
-        fill={color}
-      />
-    </svg>
-  );
+  return <Icon icon="lucide:file-text" width={14} height={14} color={color} />;
 }
 
 function PaletteIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path
-        d={svgPaths.p17c66200}
-        stroke={color}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d={svgPaths.p31eedf00}
-        stroke={color}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M5 4.5H4" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 6.5H4" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 8.5H4" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Icon icon="lucide:palette" width={14} height={14} color={color} />;
 }
 
 function CodeIcon({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M3.5 10.5L0 7L3.5 3.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10.5 10.5L14 7L10.5 3.5" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8.16667 1.16667L5.83333 12.8333" stroke={color} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Icon icon="lucide:code" width={14} height={14} color={color} />;
+}
+
+function ListIcon({ color }: { color: string }) {
+  return <Icon icon="lucide:list" width={14} height={14} color={color} />;
 }
 
 const TABS_CONFIG = [
   { id: "Preview", label: "Preview", Icon: EyeIcon },
   { id: "PRD", label: "PRD", Icon: FileTextIcon },
   { id: "Design", label: "Design", Icon: PaletteIcon },
+  { id: "Features", label: "Features", Icon: ListIcon },
   { id: "Code", label: "Code", Icon: CodeIcon },
 ] as const;
 
@@ -135,12 +85,7 @@ function TabBar({
         style={{ width: 24, height: 24 }}
         aria-label="More options"
       >
-        <Svg12>
-          {pf(
-            "M6 1.5H1C1.5 1.5 1 1 1 1.5V10.5C1 11 1.5 11 1.5 11H10C10.5 11 10.5 10.5 10.5 10V5.5",
-            "#717182",
-          )}
-        </Svg12>
+        <Icon icon="lucide:more-horizontal" width={12} height={12} color="#717182" />
       </button>
     </div>
   );
@@ -200,9 +145,7 @@ function PrdHeader() {
             fontWeight: 500,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d={svgPaths.p127a080} fill="#717182" />
-          </svg>
+          <Icon icon="lucide:history" width={14} height={14} color="#717182" />
           History
         </button>
         <button
@@ -214,9 +157,7 @@ function PrdHeader() {
             fontWeight: 500,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d={svgPaths.p2213bc80} fill="#717182" />
-          </svg>
+          <Icon icon="lucide:download" width={14} height={14} color="#717182" />
           Export
         </button>
       </div>
@@ -246,9 +187,7 @@ function FeatureCountBadge({ count }: { count: number }) {
       </span>
       <div className="flex-1" />
       <button className="hover:opacity-70">
-        <Svg14>
-          <path d={svgPaths.pc990c00} fill="#717182" />
-        </Svg14>
+        <Icon icon="lucide:more-vertical" width={14} height={14} color="#717182" />
       </button>
     </div>
   );
@@ -410,6 +349,8 @@ export function PRDContent({ features: apiFeatures }: { features?: FeatureSummar
           <PrdBody features={features} />
         ) : activeTab === "Design" ? (
           <DesignContent features={apiFeatures} />
+        ) : activeTab === "Features" ? (
+          <FeaturesContent features={apiFeatures} />
         ) : (
           <PlaceholderBody label={activeTab} />
         )}

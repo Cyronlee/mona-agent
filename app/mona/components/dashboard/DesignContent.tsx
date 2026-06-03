@@ -1,6 +1,5 @@
 import { useState } from "react";
-import svgPaths from "../../../assets/svgDashboard";
-import { Svg12, Svg14, Svg16 } from "./icons";
+import { Icon } from "@iconify/react";
 import { ToolBoxIcon } from "./dashboardIcons";
 import { toDesignFeatures, type DesignFeature, type DesignStatus } from "./prdData";
 
@@ -13,15 +12,7 @@ function StatusIcon({ type }: { type: DesignStatus }) {
         className="flex items-center justify-center rounded-full shrink-0"
         style={{ width: 24, height: 24, background: "#002557" }}
       >
-        <Svg12>
-          <path
-            d="M2.5 6.5L5 9L9.5 3.5"
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg12>
+        <Icon icon="lucide:check" width={12} height={12} color="white" />
       </div>
     );
   }
@@ -31,9 +22,7 @@ function StatusIcon({ type }: { type: DesignStatus }) {
         className="flex items-center justify-center rounded-full shrink-0"
         style={{ width: 24, height: 24, background: "#FF7F26" }}
       >
-        <Svg12>
-          <path d="M3 6h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        </Svg12>
+        <Icon icon="lucide:minus" width={12} height={12} color="white" />
       </div>
     );
   }
@@ -42,14 +31,7 @@ function StatusIcon({ type }: { type: DesignStatus }) {
       className="flex items-center justify-center rounded-full shrink-0"
       style={{ width: 24, height: 24, background: "#ececf0" }}
     >
-      <Svg12>
-        <path
-          d="M4 3.5v5M8 3.5v5"
-          stroke="#717182"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </Svg12>
+      <Icon icon="lucide:pause" width={12} height={12} color="#717182" />
     </div>
   );
 }
@@ -124,9 +106,7 @@ function FeatureListPanel({ features }: { features: DesignFeature[] }) {
           </span>
         </div>
         <button className="hover:opacity-70">
-          <Svg14>
-            <path d={svgPaths.pc990c00} fill="#717182" />
-          </Svg14>
+          <Icon icon="lucide:more-vertical" width={14} height={14} color="#717182" />
         </button>
       </div>
       <FeatureList features={features} />
@@ -164,12 +144,7 @@ function PrototypePanel() {
     <div className="flex flex-col flex-1 p-4 bg-[#feffff] overflow-y-auto">
       <div className="flex justify-end mb-3">
         <button className="flex items-center gap-1.5 px-2 h-[32px] rounded-[4px] bg-[#f6f6f9] hover:bg-gray-200 cursor-pointer">
-          <Svg16>
-            <path
-              d="M4 12v-2h8v2H4zm4-4L5 5h6L8 8z"
-              fill="rgba(113,113,130,0.6)"
-            />
-          </Svg16>
+          <Icon icon="lucide:download" width={16} height={16} color="rgba(113,113,130,0.6)" />
           <span
             className="text-[12px] text-[rgba(113,113,130,0.6)]"
             style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
