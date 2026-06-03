@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { MonkeySvg } from "@/mona/components/MonkeySvg"
-import { ApiError, type ProjectSummary } from "@/mona/api/projects"
 import svgPaths1 from "@/assets/svgPaths1"
 import { SetupStep as SetupStepBase, type SetupDraft } from "./setup/SetupStep"
 
@@ -141,18 +140,10 @@ export function SetupStep({
 }
 
 export function LoadingStep({
-  draft,
-  onDone,
-  onFailure,
-  createProjectFn,
 }: {
-  draft: SetupDraft
-  onDone: (slug: string) => void | Promise<void>
-  onFailure: (message: string) => void
-  createProjectFn: (input: { title: string; desc?: string }) => Promise<ProjectSummary>
+  // Presentational step only. Creation/navigation is owned by NewFlow.
 }) {
   const [msgIdx, setMsgIdx] = useState(0)
-  const startedRef = useRef(false)
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -160,36 +151,6 @@ export function LoadingStep({
     }, 700)
     return () => clearInterval(interval)
   }, [])
-
-  useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
-
-    let cancelled = false
-    ;(async () => {
-      try {
-        const project = await createProjectFn({
-          title: draft.projectName,
-          desc: draft.description || undefined,
-        })
-        if (cancelled) return
-        await onDone(project.slug)
-      } catch (error) {
-        if (cancelled) return
-        const message =
-          error instanceof ApiError
-            ? error.message
-            : error instanceof Error
-              ? error.message
-              : "Failed to create project"
-        onFailure(message)
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [createProjectFn, draft.description, draft.projectName, onDone, onFailure])
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">

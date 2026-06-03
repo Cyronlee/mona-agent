@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createProject } from "@/mona/api/projects"
+import { ApiError, createProject } from "@/mona/api/projects"
 import { IdeaStep, LoadingStep, SetupStep, type SetupDraft } from "./NewSteps"
 
 type NewStep = "idea" | "setup" | "loading"
@@ -23,26 +23,49 @@ export function NewFlow() {
   const [setupDraft, setSetupDraft] = useState<SetupDraft>(DEFAULT_SETUP_DRAFT)
   const [draftError, setDraftError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (step !== "loading") return
+
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const project = await createProject({
+          title: setupDraft.projectName,
+          desc: setupDraft.description || undefined,
+        })
+
+        if (cancelled) return
+
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(STORAGE_KEY, project.slug)
+          window.location.replace("/dashboard")
+          return
+        }
+
+        router.replace("/dashboard")
+      } catch (error) {
+        if (cancelled) return
+
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Failed to create project"
+
+        setDraftError(message)
+        setStep("setup")
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router, setupDraft.description, setupDraft.projectName, step])
+
   if (step === "loading") {
-    return (
-      <LoadingStep
-        draft={setupDraft}
-        createProjectFn={createProject}
-        onDone={(slug) => {
-          if (typeof window !== "undefined") {
-            window.localStorage.setItem(STORAGE_KEY, slug)
-          }
-          setProjectIdea("")
-          setSetupDraft(DEFAULT_SETUP_DRAFT)
-          setDraftError(null)
-          router.replace("/dashboard")
-        }}
-        onFailure={(message) => {
-          setDraftError(message)
-          setStep("setup")
-        }}
-      />
-    )
+    return <LoadingStep />
   }
 
   if (step === "setup") {
