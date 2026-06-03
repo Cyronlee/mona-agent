@@ -63,6 +63,21 @@ export type FeatureDetail = {
     suggestions: SuggestionSummary[]
 }
 
+export type ProjectCodeNode = {
+    path: string
+    name: string
+    kind: "file" | "directory"
+    children?: ProjectCodeNode[]
+}
+
+export type ProjectCodeFile = {
+    path: string
+    content: string
+    language: string
+    size: number
+    updatedAt: string
+}
+
 // ── Fetchers ──────────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -139,6 +154,15 @@ export function getFeatureDetail(projectSlug: string, featureSlug: string): Prom
 
 export function getAllSuggestions(projectSlug: string): Promise<AggregatedSuggestion[]> {
     return apiFetch(`/api/projects/${projectSlug}/suggestions`)
+}
+
+export function getProjectCodeTree(projectSlug: string): Promise<ProjectCodeNode[]> {
+    return apiFetch(`/api/projects/${projectSlug}/code`)
+}
+
+export function getProjectCodeFile(projectSlug: string, filePath: string): Promise<ProjectCodeFile> {
+    const params = new URLSearchParams({ path: filePath })
+    return apiFetch(`/api/projects/${projectSlug}/code/file?${params.toString()}`)
 }
 
 export function getStoryDocument(

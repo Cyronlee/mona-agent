@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Icon } from "@iconify/react";
+import { CodeWorkspace } from "./CodeWorkspace";
 import {
   MDXEditor,
   headingsPlugin,
@@ -337,7 +338,6 @@ function PrdBody({ projectSlug }: { projectSlug: string }) {
     </div>
   );
 }
-
 export function PRDContent({
   features: apiFeatures,
   projectSlug,
@@ -346,6 +346,19 @@ export function PRDContent({
   projectSlug: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("PRD");
+  let body: React.ReactNode;
+
+  if (activeTab === "PRD") {
+    body = <PrdBody projectSlug={projectSlug} />;
+  } else if (activeTab === "Design") {
+    body = <DesignContent features={apiFeatures} />;
+  } else if (activeTab === "Features") {
+    body = <FeaturesContent features={apiFeatures} />;
+  } else if (activeTab === "Code") {
+    body = <CodeWorkspace projectSlug={projectSlug} />;
+  } else {
+    body = <PlaceholderBody label={activeTab} />;
+  }
 
   return (
     <div
@@ -353,17 +366,7 @@ export function PRDContent({
       style={{ background: "white" }}
     >
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
-      <div className="flex flex-1 overflow-hidden">
-        {activeTab === "PRD" ? (
-          <PrdBody projectSlug={projectSlug} />
-        ) : activeTab === "Design" ? (
-          <DesignContent features={apiFeatures} />
-        ) : activeTab === "Features" ? (
-          <FeaturesContent features={apiFeatures} />
-        ) : (
-          <PlaceholderBody label={activeTab} />
-        )}
-      </div>
+      <div className="flex flex-1 overflow-hidden">{body}</div>
     </div>
   );
 }

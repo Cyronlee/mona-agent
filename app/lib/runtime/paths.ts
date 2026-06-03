@@ -25,6 +25,33 @@ export function projectDir(projectSlug: string): string {
   return path.join(PROJECTS_ROOT, projectSlug)
 }
 
+export function projectCodeDir(projectSlug: string): string {
+  return path.join(projectDir(projectSlug), "code")
+}
+
+export function projectContentRoot(projectSlug: string): string {
+  return projectDir(projectSlug)
+}
+
+export function resolveProjectCodePath(
+  projectSlug: string,
+  relativePath: string,
+): string {
+  const codeRoot = projectContentRoot(projectSlug)
+  const normalized = relativePath.replace(/\\/g, "/").replace(/^\/+/, "")
+  const resolved = path.resolve(codeRoot, normalized)
+  const relativeToRoot = path.relative(codeRoot, resolved)
+
+  if (
+    relativeToRoot === "" ||
+    (!relativeToRoot.startsWith("..") && !path.isAbsolute(relativeToRoot))
+  ) {
+    return resolved
+  }
+
+  throw new Error("Path escapes project directory")
+}
+
 export function runtimeDir(projectSlug: string): string {
   return path.join(projectDir(projectSlug), ".runtime")
 }

@@ -210,10 +210,12 @@ export function createProject(input: { title: string; desc?: string }): ProjectS
 
     const slug = resolveUniqueSlug(root, base)
     const projectDir = path.join(root, slug)
+    const codeDir = path.join(projectDir, "code")
     const featuresDir = path.join(projectDir, "features")
     const now = new Date().toISOString().slice(0, 10)
     const desc = (input.desc ?? "").trim() || `${title} project workspace.`
 
+    fs.mkdirSync(codeDir, { recursive: true })
     fs.mkdirSync(featuresDir, { recursive: true })
 
     const meta: ProjectMeta = {
