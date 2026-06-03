@@ -1,6 +1,6 @@
-import svgPaths1 from "../../../assets/svgPaths1";
+import svgPaths1 from "@/assets/svgPaths1"
 
-const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const;
+const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const
 
 function BackIcon() {
   return (
@@ -20,7 +20,7 @@ function BackIcon() {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
 
 function ArrowRight() {
@@ -41,24 +41,24 @@ function ArrowRight() {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
 
 export function ActionBar({
   onBack,
   onStart,
 }: {
-  onBack: () => void;
-  onStart: () => void;
+  onBack: () => void
+  onStart: () => void
 }) {
   return (
     <div
-      className="flex items-center justify-between w-full"
+      className="flex w-full items-center justify-between"
       style={{ maxWidth: 861 }}
     >
       <button
         onClick={onBack}
-        className="flex items-center gap-2 px-4 rounded-[8px] cursor-pointer transition-opacity hover:opacity-70"
+        className="flex cursor-pointer items-center gap-2 rounded-[8px] px-4 transition-opacity hover:opacity-70"
         style={{
           background: "transparent",
           border: "1px solid rgba(0,0,0,0.12)",
@@ -67,7 +67,7 @@ export function ActionBar({
       >
         <BackIcon />
         <span
-          className="text-[14px] text-[#6b727e] tracking-[-0.15px]"
+          className="text-[14px] tracking-[-0.15px] text-[#6b727e]"
           style={{ ...POPPINS, fontWeight: 500 }}
         >
           Back
@@ -76,7 +76,7 @@ export function ActionBar({
 
       <button
         onClick={onStart}
-        className="flex items-center gap-2 px-4 rounded-[8px] cursor-pointer transition-opacity hover:opacity-90"
+        className="flex cursor-pointer items-center gap-2 rounded-[8px] px-4 transition-opacity hover:opacity-90"
         style={{
           background: "#002557",
           border: "1px solid #ff7f26",
@@ -85,7 +85,7 @@ export function ActionBar({
         }}
       >
         <span
-          className="text-[14px] text-[#ff7f26] tracking-[-0.15px]"
+          className="text-[14px] tracking-[-0.15px] text-[#ff7f26]"
           style={{ ...POPPINS, fontWeight: 700 }}
         >
           Start project
@@ -93,5 +93,5 @@ export function ActionBar({
         <ArrowRight />
       </button>
     </div>
-  );
+  )
 }

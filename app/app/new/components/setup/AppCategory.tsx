@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { CheckCircle, UploadIcon } from "./icons";
+import type { ReactNode } from "react"
+import { CheckCircle, UploadIcon } from "./icons"
 
 function ToggleBtn({
   checked,
@@ -7,32 +7,31 @@ function ToggleBtn({
   icon,
   label,
 }: {
-  checked: boolean;
-  onToggle: () => void;
-  icon: ReactNode;
-  label: string;
+  checked: boolean
+  onToggle: () => void
+  icon: ReactNode
+  label: string
 }) {
   return (
     <button
       onClick={onToggle}
-      className="flex items-center justify-between px-[13px] w-full rounded-[10px] cursor-pointer transition-all"
+      className="flex h-[62px] w-full cursor-pointer items-center justify-between rounded-[10px] px-[13px] transition-all"
       style={{
         background: "rgba(255,255,255,0.8)",
         border: "1px solid rgba(0,0,0,0.08)",
-        height: 62,
       }}
     >
       <div className="flex items-center gap-3">
         {icon}
         <span
-          className="text-[14px] text-[#111827] whitespace-nowrap"
+          className="whitespace-nowrap text-[14px] text-[#111827]"
           style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500 }}
         >
           {label}
         </span>
       </div>
       <div
-        className="flex items-center justify-center rounded-full shrink-0 transition-all"
+        className="flex shrink-0 items-center justify-center rounded-full transition-all"
         style={{
           width: 20,
           height: 20,
@@ -43,7 +42,7 @@ function ToggleBtn({
         {checked && <CheckCircle />}
       </div>
     </button>
-  );
+  )
 }
 
 export function AppCategory({
@@ -53,16 +52,16 @@ export function AppCategory({
   onToggle,
   showUpload,
 }: {
-  label: string;
-  apps: { id: string; name: string; icon: ReactNode }[];
-  toggles: Record<string, boolean>;
-  onToggle: (id: string) => void;
-  showUpload?: boolean;
+  label: string
+  apps: { id: string; name: string; icon: ReactNode }[]
+  toggles: Record<string, boolean>
+  onToggle: (id: string) => void
+  showUpload?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-0">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
       <span
-        className="text-[14px] text-[#6b727e] whitespace-nowrap"
+        className="whitespace-nowrap text-[14px] text-[#6b727e]"
         style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
       >
         {label}
@@ -78,7 +77,7 @@ export function AppCategory({
       ))}
       {showUpload ? (
         <button
-          className="flex items-center gap-2 text-[14px] text-[#111827] cursor-pointer hover:opacity-70 transition-opacity"
+          className="flex cursor-pointer items-center gap-2 text-[14px] text-[#111827] transition-opacity hover:opacity-70"
           style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500 }}
         >
           <UploadIcon />
@@ -86,12 +85,12 @@ export function AppCategory({
         </button>
       ) : (
         <span
-          className="text-[14px] text-[#111827] cursor-pointer hover:opacity-70 transition-opacity"
+          className="cursor-pointer text-[14px] text-[#111827] transition-opacity hover:opacity-70"
           style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500 }}
         >
           + More
         </span>
       )}
     </div>
-  );
+  )
 }

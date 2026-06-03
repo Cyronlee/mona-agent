@@ -1,22 +1,17 @@
-import { AppCategory } from "./AppCategory";
-import {
-  DESIGN_APPS,
-  DOC_APPS,
-  MAIL_APPS,
-  MEETING_APPS,
-} from "./appsData";
+import { AppCategory } from "./AppCategory"
+import { DESIGN_APPS, DOC_APPS, MAIL_APPS, MEETING_APPS } from "./appsData"
 
-const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const;
+const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const
 
 export function AppIntegrations({
   toggles,
   onToggle,
 }: {
-  toggles: Record<string, boolean>;
-  onToggle: (id: string) => void;
+  toggles: Record<string, boolean>
+  onToggle: (id: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex w-full flex-col gap-2">
       <p
         className="text-[16px] text-[#0a0a0a]"
         style={{ ...POPPINS, fontWeight: 500 }}
@@ -39,7 +34,7 @@ export function AppIntegrations({
             "0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px 0px rgba(0,0,0,0.1)",
         }}
       >
-        <div className="flex gap-4 w-full">
+        <div className="flex w-full gap-4">
           <AppCategory
             label="Meeting"
             apps={MEETING_APPS}
@@ -68,5 +63,5 @@ export function AppIntegrations({
         </div>
       </div>
     </div>
-  );
+  )
 }

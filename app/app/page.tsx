@@ -1,5 +1,7 @@
-import MonaApp from "../mona/App";
+import { redirect } from "next/navigation";
+import { listProjects } from "@/lib/projects/loader";
 
 export default function Home() {
-  return <MonaApp />;
+  const projects = listProjects();
+  redirect(projects.length > 0 ? "/dashboard" : "/new");
 }

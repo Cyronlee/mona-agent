@@ -1,33 +1,30 @@
-const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const;
+const POPPINS = { fontFamily: "'Poppins', sans-serif" } as const
 
 const FIELD_STYLE = {
   background: "rgba(255,255,255,0.7)",
   border: "1px solid rgba(0,0,0,0.1)",
   height: 48,
-} as const;
+} as const
 
 const INPUT_STYLE = {
   fontFamily: "'Poppins', sans-serif",
   fontWeight: 400,
-} as const;
+} as const
 
 function FieldShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="relative rounded-[8px]"
-      style={FIELD_STYLE}
-    >
+    <div className="relative rounded-[8px]" style={FIELD_STYLE}>
       {children}
     </div>
-  );
+  )
 }
 
 function ProjectNameField({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  value: string
+  onChange: (value: string) => void
 }) {
   return (
     <div className="flex flex-col gap-2" style={{ width: 492 }}>
@@ -39,14 +36,14 @@ function ProjectNameField({
       </label>
       <FieldShell>
         <input
-          className="size-full px-[13px] py-[9px] bg-transparent outline-none text-[14px] text-[#0a0a0a] tracking-[-0.15px] rounded-[8px]"
+          className="size-full rounded-[8px] bg-transparent px-[13px] py-[9px] text-[14px] tracking-[-0.15px] text-[#0a0a0a] outline-none"
           style={INPUT_STYLE}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
       </FieldShell>
     </div>
-  );
+  )
 }
 
 const DOMAINS = [
@@ -56,17 +53,17 @@ const DOMAINS = [
   "Education",
   "Technology",
   "Other",
-];
+]
 
 function DomainField({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  value: string
+  onChange: (value: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-0">
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
       <label
         className="text-[14px] text-[#0a0a0a]"
         style={{ ...POPPINS, fontWeight: 700 }}
@@ -75,18 +72,18 @@ function DomainField({
       </label>
       <FieldShell>
         <select
-          className="size-full px-[13px] py-[9px] bg-transparent outline-none text-[14px] text-[#0a0a0a] tracking-[-0.15px] rounded-[8px] appearance-none cursor-pointer"
+          className="size-full appearance-none rounded-[8px] bg-transparent px-[13px] py-[9px] text-[14px] tracking-[-0.15px] text-[#0a0a0a] outline-none cursor-pointer"
           style={INPUT_STYLE}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         >
-          {DOMAINS.map((d) => (
-            <option key={d} value={d}>
-              {d}
+          {DOMAINS.map((domain) => (
+            <option key={domain} value={domain}>
+              {domain}
             </option>
           ))}
         </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path
               d="M10 16.998V6.998L15 11.998L10 16.998Z"
@@ -97,7 +94,7 @@ function DomainField({
         </div>
       </FieldShell>
     </div>
-  );
+  )
 }
 
 export function ProjectMetaFields({
@@ -106,28 +103,28 @@ export function ProjectMetaFields({
   domain,
   onDomainChange,
 }: {
-  projectName: string;
-  onProjectNameChange: (v: string) => void;
-  domain: string;
-  onDomainChange: (v: string) => void;
+  projectName: string
+  onProjectNameChange: (value: string) => void
+  domain: string
+  onDomainChange: (value: string) => void
 }) {
   return (
-    <div className="flex gap-6 items-start w-full">
+    <div className="flex w-full items-start gap-6">
       <ProjectNameField value={projectName} onChange={onProjectNameChange} />
       <DomainField value={domain} onChange={onDomainChange} />
     </div>
-  );
+  )
 }
 
 export function DescriptionField({
   value,
   onChange,
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  value: string
+  onChange: (value: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex w-full flex-col gap-2">
       <p
         className="text-[16px] text-[#0a0a0a]"
         style={{ ...POPPINS, fontWeight: 500 }}
@@ -142,7 +139,7 @@ export function DescriptionField({
       </p>
       <FieldShell>
         <input
-          className="size-full px-[13px] py-[9px] bg-transparent outline-none text-[14px] text-[#717182] tracking-[-0.15px] rounded-[8px]"
+          className="size-full rounded-[8px] bg-transparent px-[13px] py-[9px] text-[14px] tracking-[-0.15px] text-[#717182] outline-none"
           style={INPUT_STYLE}
           placeholder="Describe here..."
           value={value}
@@ -150,5 +147,5 @@ export function DescriptionField({
         />
       </FieldShell>
     </div>
-  );
+  )
 }

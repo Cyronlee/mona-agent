@@ -1,16 +1,16 @@
-import svgPaths2 from "../../../assets/svgPaths2";
-import { AppIcon } from "./appIcon";
+import svgPaths2 from "@/assets/svgPaths2"
+import { AppIcon } from "./appIcon"
 
 function CheckCircleSvg() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
       <path d={svgPaths2.p39456c00} fill="white" />
     </svg>
-  );
+  )
 }
 
 export function CheckCircle() {
-  return <CheckCircleSvg />;
+  return <CheckCircleSvg />
 }
 
 function LetterIcon({ letter, bg }: { letter: string; bg: string }) {
@@ -23,13 +23,13 @@ function LetterIcon({ letter, bg }: { letter: string; bg: string }) {
         {letter}
       </span>
     </AppIcon>
-  );
+  )
 }
 
-export const OutlookIcon = () => <LetterIcon letter="O" bg="#eff6ff" />;
-export const GmailIcon = () => <LetterIcon letter="G" bg="#eef2ff" />;
-export const FigmaIcon = () => <LetterIcon letter="F" bg="#f5f3ff" />;
-export const UXPilotIcon = () => <LetterIcon letter="U" bg="#f5f3ff" />;
+export const OutlookIcon = () => <LetterIcon letter="O" bg="#eff6ff" />
+export const GmailIcon = () => <LetterIcon letter="G" bg="#eef2ff" />
+export const FigmaIcon = () => <LetterIcon letter="F" bg="#f5f3ff" />
+export const UXPilotIcon = () => <LetterIcon letter="U" bg="#f5f3ff" />
 
 export function ZoomIcon() {
   return (
@@ -51,7 +51,7 @@ export function ZoomIcon() {
         />
       </svg>
     </AppIcon>
-  );
+  )
 }
 
 export function GoogleChatIcon() {
@@ -67,7 +67,7 @@ export function GoogleChatIcon() {
         />
       </svg>
     </AppIcon>
-  );
+  )
 }
 
 export function GoogleDriveIcon() {
@@ -104,7 +104,7 @@ export function GoogleDriveIcon() {
         />
       </svg>
     </AppIcon>
-  );
+  )
 }
 
 export function ConfluenceIcon() {
@@ -148,7 +148,7 @@ export function ConfluenceIcon() {
         />
       </svg>
     </AppIcon>
-  );
+  )
 }
 
 export function UploadIcon() {
@@ -176,5 +176,5 @@ export function UploadIcon() {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
