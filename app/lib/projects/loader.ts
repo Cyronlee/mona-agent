@@ -32,6 +32,26 @@ function getProjectsRoot(): string {
     return process.env.PROJECTS_ROOT ?? path.resolve(process.cwd(), "../projects")
 }
 
+// ── Slug helpers ──────────────────────────────────────────────────────────────
+
+function slugify(input: string): string {
+    return input
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "")
+}
+
+function resolveUniqueSlug(root: string, base: string): string {
+    if (!base) return ""
+    if (!fs.existsSync(path.join(root, base))) return base
+    let i = 2
+    while (fs.existsSync(path.join(root, `${base}-${i}`))) i++
+    return `${base}-${i}`
+}
+
 // ── Internal error type ───────────────────────────────────────────────────────
 
 export class ContentError extends Error {
@@ -160,6 +180,77 @@ export function listProjects(): ProjectSummary[] {
     }
 
     return results
+}
+
+export function createProject(input: { title: string; desc?: string }): ProjectSummary {
+    const title = (input.title ?? "").trim()
+    if (!title) throw new ContentError("title is required", 422)
+    if (title.length > 120) throw new ContentError("title too long (max 120 chars)", 422)
+
+    const root = getProjectsRoot()
+    fs.mkdirSync(root, { recursive: true })
+
+    const base = slugify(title)
+    if (!base) {
+        throw new ContentError("title must contain at least one alphanumeric character", 422)
+    }
+
+    const slug = resolveUniqueSlug(root, base)
+    const projectDir = path.join(root, slug)
+    const featuresDir = path.join(projectDir, "features")
+    const now = new Date().toISOString().slice(0, 10)
+    const desc = (input.desc ?? "").trim() || `${title} project workspace.`
+
+    fs.mkdirSync(featuresDir, { recursive: true })
+
+    const meta: ProjectMeta = {
+        slug,
+        title,
+        desc,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+    }
+    fs.writeFileSync(path.join(projectDir, "project.json"), JSON.stringify(meta, null, 4))
+
+    const prdBody = [
+        "## Overview",
+        "",
+        desc,
+        "",
+        "## Goals",
+        "",
+        "- Define the initial scope and success criteria",
+        "- Identify primary users and their jobs-to-be-done",
+        "",
+        "## Scope",
+        "",
+        "_To be filled in._",
+    ].join("\n")
+    const prdDoc = [
+        "---",
+        `title: "${title} — Product Requirements Document"`,
+        `desc: ${JSON.stringify(desc)}`,
+        "status: draft",
+        'version: "0.1"',
+        `updatedAt: ${JSON.stringify(now)}`,
+        "---",
+        "",
+        prdBody,
+        "",
+    ].join("\n")
+    fs.writeFileSync(path.join(projectDir, "PRD.md"), prdDoc)
+
+    return {
+        slug: meta.slug,
+        title: meta.title,
+        desc: meta.desc,
+        status: meta.status,
+        updatedAt: meta.updatedAt,
+        featureCount: 0,
+        storyCount: 0,
+        suggestionCount: 0,
+    }
 }
 
 export function getProjectDetail(projectSlug: string): ProjectDetail {

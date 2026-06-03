@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MonkeySvg } from "./MonkeySvg";
 import svgPaths3 from "../../assets/svgPaths1";
+import { ApiError, type ProjectSummary } from "../api/projects";
 
 const imgBgFlipped = "/mona/bg.png";
 
@@ -11,20 +12,54 @@ const LOADING_MESSAGES = [
   "Almost ready…",
 ];
 
-export function Screen3({ onDone }: { onDone: () => void }) {
+type Screen3Props = {
+  draft: { title: string; description: string };
+  onDone: (slug: string) => void | Promise<void>;
+  onFailure: (message: string) => void;
+  createProjectFn: (input: { title: string; desc?: string }) => Promise<ProjectSummary>;
+};
+
+export function Screen3({ draft, onDone, onFailure, createProjectFn }: Screen3Props) {
   const [msgIdx, setMsgIdx] = useState(0);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length);
     }, 700);
-    const timeout = setTimeout(onDone, 3000);
-    return () => { clearInterval(interval); clearTimeout(timeout); };
-  }, [onDone]);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const project = await createProjectFn({
+          title: draft.title,
+          desc: draft.description || undefined,
+        });
+        if (cancelled) return;
+        await onDone(project.slug);
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof ApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : "Failed to create project";
+        onFailure(message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.title, draft.description, createProjectFn, onDone, onFailure]);
 
   return (
     <div className="relative flex flex-col overflow-hidden" style={{ background: "#f5f6f8", flex: 1 }}>
-      {/* Background — flipped 180° as per Figma */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -35,7 +70,6 @@ export function Screen3({ onDone }: { onDone: () => void }) {
       />
 
       <div className="relative flex flex-col items-center justify-center flex-1 gap-6 px-6">
-        {/* Monkey upright */}
         <div style={{ transform: "scaleY(-1) rotate(180deg)" }}>
           <MonkeySvg paths={svgPaths3} />
         </div>
@@ -54,7 +88,6 @@ export function Screen3({ onDone }: { onDone: () => void }) {
           Just two steps to get started. I'll keep an eye on things, listen to your needs, suggest ideas, and create agents to take care of the busywork for you.
         </p>
 
-        {/* Animated loading indicator */}
         <div className="flex items-center gap-3 mt-4">
           <div className="flex gap-1.5">
             {[0, 1, 2].map((i) => (

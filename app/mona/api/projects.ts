@@ -73,8 +73,34 @@ async function apiFetch<T>(path: string): Promise<T> {
     return res.json() as Promise<T>
 }
 
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new ApiError(data.error ?? `Request failed: ${res.status}`, res.status)
+    }
+    return res.json() as Promise<T>
+}
+
+export class ApiError extends Error {
+    readonly status: number
+    constructor(message: string, status: number) {
+        super(message)
+        this.name = "ApiError"
+        this.status = status
+    }
+}
+
 export function listProjects(): Promise<ProjectSummary[]> {
     return apiFetch("/api/projects")
+}
+
+export function createProject(input: { title: string; desc?: string }): Promise<ProjectSummary> {
+    return apiPost("/api/projects", input)
 }
 
 export function getProjectDetail(projectSlug: string): Promise<ProjectDetail> {

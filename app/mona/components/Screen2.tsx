@@ -1,1 +1,1 @@
-export { Screen2 } from "./screen2/Screen2";
+export { Screen2, type Screen2Payload } from "./screen2/Screen2";

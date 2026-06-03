@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { getAllSuggestions, getProjectDetail } from "../../api/projects";
-import type { AggregatedSuggestion, FeatureSummary } from "../../api/projects";
+import type {
+  AggregatedSuggestion,
+  FeatureSummary,
+  ProjectSummary,
+} from "../../api/projects";
 import { BottomBar } from "./BottomBar";
 import { InboxPanel } from "./InboxPanel";
 import { PRDContent } from "./PRDContent";
@@ -11,23 +15,43 @@ import { TopBar } from "./TopBar";
 
 type DashboardProps = {
   projectSlug: string;
+  projects: ProjectSummary[];
+  onSelectProject: (slug: string) => void;
+  onCreateNew: () => void;
 };
 
-export function Dashboard({ projectSlug }: DashboardProps) {
+export function Dashboard({
+  projectSlug,
+  projects,
+  onSelectProject,
+  onCreateNew,
+}: DashboardProps) {
   const [inboxCollapsed, setInboxCollapsed] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [projectTitle, setProjectTitle] = useState("Acme feedback tool");
+  const [projectTitle, setProjectTitle] = useState(
+    projects.find((p) => p.slug === projectSlug)?.title ?? projectSlug,
+  );
   const [features, setFeatures] = useState<FeatureSummary[]>([]);
   const [suggestions, setSuggestions] = useState<AggregatedSuggestion[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
     getProjectDetail(projectSlug)
       .then((detail) => {
+        if (cancelled) return;
         setProjectTitle(detail.meta.title);
         setFeatures(detail.features);
       })
       .catch(console.error);
-    getAllSuggestions(projectSlug).then(setSuggestions).catch(console.error);
+    getAllSuggestions(projectSlug)
+      .then((data) => {
+        if (cancelled) return;
+        setSuggestions(data);
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
   }, [projectSlug]);
 
   return (
@@ -41,6 +65,10 @@ export function Dashboard({ projectSlug }: DashboardProps) {
         onToggleInbox={() => setInboxCollapsed((v) => !v)}
         onToggleRightPanel={() => setRightPanelOpen((v) => !v)}
         projectTitle={projectTitle}
+        projects={projects}
+        currentProjectSlug={projectSlug}
+        onSelectProject={onSelectProject}
+        onCreateNew={onCreateNew}
       />
       <div
         className="flex flex-1 overflow-hidden"
@@ -48,7 +76,6 @@ export function Dashboard({ projectSlug }: DashboardProps) {
       >
         <InboxPanel
           collapsed={inboxCollapsed}
-          onToggle={() => setInboxCollapsed((v) => !v)}
           suggestions={suggestions.length > 0 ? suggestions : undefined}
         />
         <main

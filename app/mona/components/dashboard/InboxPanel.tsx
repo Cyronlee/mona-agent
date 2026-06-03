@@ -257,7 +257,7 @@ function MonkeyAvatar() {
   );
 }
 
-function CollapsedInbox({ onToggle }: { onToggle: () => void }) {
+function CollapsedInbox() {
   return (
     <div
       className="flex flex-col items-center shrink-0"
@@ -299,22 +299,13 @@ function CollapsedInbox({ onToggle }: { onToggle: () => void }) {
       </div>
 
       <div className="flex-1" />
-      <button onClick={onToggle} className="mb-3 hover:opacity-70 transition-opacity">
-        <Svg14>
-          {pf(svgPaths.pc71600, "#717182")}
-          {pf("M5.25 1.75V12.25", "#717182")}
-          {pf(svgPaths.p9d4f800, "#717182")}
-        </Svg14>
-      </button>
     </div>
   );
 }
 
 function ExpandedInbox({
-  onToggle,
   suggestions,
 }: {
-  onToggle: () => void;
   suggestions: Suggestion[];
 }) {
   const [dismissed, setDismissed] = useState<number[]>([]);
@@ -357,14 +348,8 @@ function ExpandedInbox({
             9
           </span>
         </div>
-        <button onClick={onToggle} className="hover:opacity-70">
-          <Svg14>
-            {pf(svgPaths.pc71600, "#717182")}
-            {pf("M5.25 1.75V12.25", "#717182")}
-            {pf(svgPaths.p9d4f800, "#717182")}
-          </Svg14>
-        </button>
       </div>
+
 
       <div className="px-4 pt-4 pb-1 shrink-0">
         <div className="flex items-center gap-1.5">
@@ -421,17 +406,15 @@ function ExpandedInbox({
 
 type InboxPanelProps = {
   collapsed: boolean;
-  onToggle: () => void;
   suggestions?: AggregatedSuggestion[];
 };
 
 export function InboxPanel({
   collapsed,
-  onToggle,
   suggestions,
 }: InboxPanelProps) {
-  if (collapsed) return <CollapsedInbox onToggle={onToggle} />;
+  if (collapsed) return <CollapsedInbox />;
   return (
-    <ExpandedInbox onToggle={onToggle} suggestions={toSuggestions(suggestions)} />
+    <ExpandedInbox suggestions={toSuggestions(suggestions)} />
   );
 }
