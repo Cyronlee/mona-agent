@@ -87,6 +87,19 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
     return res.json() as Promise<T>
 }
 
+async function apiPut<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(path, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new ApiError(data.error ?? `Request failed: ${res.status}`, res.status)
+    }
+    return res.json() as Promise<T>
+}
+
 export class ApiError extends Error {
     readonly status: number
     constructor(message: string, status: number) {
@@ -110,6 +123,10 @@ export function getProjectDetail(projectSlug: string): Promise<ProjectDetail> {
 
 export function getProjectPrd(projectSlug: string): Promise<{ title: string; content: string }> {
     return apiFetch(`/api/projects/${projectSlug}/prd`)
+}
+
+export function updateProjectPrd(projectSlug: string, content: string): Promise<{ title: string; content: string }> {
+    return apiPut(`/api/projects/${projectSlug}/prd`, { content })
 }
 
 export function listFeatures(projectSlug: string): Promise<FeatureSummary[]> {

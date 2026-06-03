@@ -293,6 +293,19 @@ export function getProjectPrd(projectSlug: string): PrdDocument {
     return { ...fm.data, content: parsed.content.trim() }
 }
 
+export function updateProjectPrd(projectSlug: string, content: string): PrdDocument {
+    requireProjectMeta(projectSlug)
+    const file = path.join(getProjectsRoot(), projectSlug, "PRD.md")
+    const parsed = safeReadMd(file)
+    if (!parsed) throw new ContentError(`PRD.md not found for project "${projectSlug}"`)
+    const fm = PrdFrontmatterSchema.safeParse(parsed.data)
+    if (!fm.success) throw new ContentError(`Invalid PRD.md frontmatter for "${projectSlug}"`, 422)
+
+    const doc = matter.stringify(content, { ...fm.data, updatedAt: new Date().toISOString().slice(0, 10) })
+    fs.writeFileSync(file, doc)
+    return { ...fm.data, content: content.trim() }
+}
+
 export function listFeatures(projectSlug: string): FeatureSummary[] {
     requireProjectMeta(projectSlug)
     const featuresDir = path.join(getProjectsRoot(), projectSlug, "features")
