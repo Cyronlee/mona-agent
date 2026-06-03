@@ -82,7 +82,10 @@ export function Dashboard({
           className="flex flex-1 overflow-hidden"
           style={{ background: "#ffffff" }}
         >
-          <PRDContent features={features.length > 0 ? features : undefined} />
+          <PRDContent
+            features={features.length > 0 ? features : undefined}
+            projectSlug={projectSlug}
+          />
         </main>
         {rightPanelOpen && (
           <RightPanel

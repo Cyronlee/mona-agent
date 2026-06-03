@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Icon } from "@iconify/react";
+import {
+  MDXEditor,
+  headingsPlugin,
+  listsPlugin,
+  quotePlugin,
+  thematicBreakPlugin,
+  linkPlugin,
+  tablePlugin,
+  codeBlockPlugin,
+} from "@mdxeditor/editor";
+import "@mdxeditor/editor/style.css";
+import { getProjectPrd } from "../../api/projects";
 import type { FeatureSummary } from "../../api/projects";
-import { ToolBoxIcon } from "./dashboardIcons";
 import { DesignContent } from "./DesignContent";
 import { FeaturesContent } from "./FeaturesContent";
-import {
-  PRD_NAV,
-  toPrdFeatures,
-  type FeatureRow,
-} from "./prdData";
 
 function EyeIcon({ color }: { color: string }) {
   return <Icon icon="lucide:eye" width={14} height={14} color={color} />;
@@ -91,238 +97,6 @@ function TabBar({
   );
 }
 
-function SectionNav({
-  active,
-  onChange,
-}: {
-  active: string;
-  onChange: (item: string) => void;
-}) {
-  return (
-    <div
-      className="flex flex-col gap-0.5 p-3 shrink-0 overflow-y-auto"
-      style={{
-        width: 180,
-        borderRight: "1px solid rgba(0,0,0,0.06)",
-        background: "#fafafa",
-      }}
-    >
-      {PRD_NAV.map((item) => (
-        <button
-          key={item}
-          onClick={() => onChange(item)}
-          className="text-left px-2 py-1.5 rounded-[6px] text-[13px] cursor-pointer transition-all"
-          style={{
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: active === item ? 500 : 400,
-            color: active === item ? "#FF7F26" : "#717182",
-            background: active === item ? "#fff7f0" : "transparent",
-          }}
-        >
-          {item}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function PrdHeader() {
-  return (
-    <div className="flex items-start justify-between mb-4">
-      <h1
-        className="text-[22px] text-[#0a0a0a]"
-        style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
-      >
-        Product Requirement Document
-      </h1>
-      <div className="flex gap-2">
-        <button
-          className="flex items-center gap-1.5 px-3 rounded-[8px] text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-gray-50"
-          style={{
-            height: 32,
-            border: "1px solid rgba(0,0,0,0.1)",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 500,
-          }}
-        >
-          <Icon icon="lucide:history" width={14} height={14} color="#717182" />
-          History
-        </button>
-        <button
-          className="flex items-center gap-1.5 px-3 rounded-[8px] text-[13px] text-[#0a0a0a] cursor-pointer hover:bg-gray-50"
-          style={{
-            height: 32,
-            border: "1px solid rgba(0,0,0,0.1)",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 500,
-          }}
-        >
-          <Icon icon="lucide:download" width={14} height={14} color="#717182" />
-          Export
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function FeatureCountBadge({ count }: { count: number }) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <ToolBoxIcon />
-      <span
-        className="text-[14px] text-[#0a0a0a]"
-        style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
-      >
-        Feature
-      </span>
-      <span
-        className="px-2 rounded-[6px] text-[13px] text-[#0a0a0a]"
-        style={{
-          background: "#f0f0f5",
-          fontFamily: "Inter, sans-serif",
-          fontWeight: 500,
-        }}
-      >
-        {count}
-      </span>
-      <div className="flex-1" />
-      <button className="hover:opacity-70">
-        <Icon icon="lucide:more-vertical" width={14} height={14} color="#717182" />
-      </button>
-    </div>
-  );
-}
-
-function FeatureSubItem({
-  num,
-  priority,
-  label,
-}: {
-  num: string;
-  priority: number;
-  label: string;
-}) {
-  return (
-    <div
-      className="flex flex-col px-6 py-2 cursor-pointer hover:bg-blue-50"
-      style={{ borderTop: "1px solid #e5e7eb" }}
-    >
-      <div className="flex items-center gap-2 mb-0.5">
-        <div
-          className="rounded-full"
-          style={{
-            width: 8,
-            height: 8,
-            background: priority === 1 ? "#002557" : "#6b727e",
-            flexShrink: 0,
-          }}
-        />
-        <span
-          className="text-[12px] text-[#717182]"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          {num} &nbsp; Priority {priority}
-        </span>
-      </div>
-      <div
-        className="pl-4 text-[14px] text-[#0a0a0a] pb-1"
-        style={{
-          fontFamily: "Poppins, sans-serif",
-          fontWeight: 500,
-          borderBottom: "3px solid #002557",
-          paddingBottom: 6,
-          marginLeft: 16,
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  );
-}
-
-function FeatureRowItem({
-  feature,
-  expanded,
-  onToggle,
-}: {
-  feature: FeatureRow;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div style={{ borderBottom: "1px solid #e5e7eb" }}>
-      <button
-        className="flex items-center justify-between w-full px-2 py-3 hover:bg-gray-50 cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-2">
-          <div className="opacity-50">
-            <ToolBoxIcon />
-          </div>
-          <span
-            className="text-[14px] text-[#0a0a0a]"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            {feature.name}
-          </span>
-        </div>
-        <span
-          className="text-[13px] text-[#717182]"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          {feature.count}
-        </span>
-      </button>
-
-      {expanded && feature.items && (
-        <div className="flex flex-col">
-          {feature.items.map((item) => (
-            <FeatureSubItem key={item.num} {...item} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PrdBody({ features }: { features: FeatureRow[] }) {
-  const [activeNav, setActiveNav] = useState("Feature Requirements");
-  const [expanded, setExpanded] = useState<string[]>([]);
-  const toggle = (name: string) =>
-    setExpanded((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    );
-
-  return (
-    <div className="flex flex-1 overflow-hidden">
-      <SectionNav active={activeNav} onChange={setActiveNav} />
-      <div className="flex-1 overflow-y-auto px-8 py-6 relative">
-        <PrdHeader />
-        <h2
-          className="text-[16px] text-[#0a0a0a] mb-3"
-          style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
-        >
-          Feature Requirements
-        </h2>
-        <FeatureCountBadge count={features.length} />
-        <div
-          className="flex flex-col"
-          style={{ borderTop: "1px solid #e5e7eb" }}
-        >
-          {features.map((f) => (
-            <FeatureRowItem
-              key={f.name}
-              feature={f}
-              expanded={expanded.includes(f.name)}
-              onToggle={() => toggle(f.name)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function PlaceholderBody({ label }: { label: string }) {
   return (
     <div
@@ -334,9 +108,106 @@ function PlaceholderBody({ label }: { label: string }) {
   );
 }
 
-export function PRDContent({ features: apiFeatures }: { features?: FeatureSummary[] }) {
+function PrdBody({ projectSlug }: { projectSlug: string }) {
+  const [content, setContent] = useState<string | null>(null);
+  const [headings, setHeadings] = useState<string[]>([]);
+  const [activeHeading, setActiveHeading] = useState<string>("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getProjectPrd(projectSlug)
+      .then((prd) => {
+        setContent(prd.content);
+        const h2s = prd.content.match(/^## (.+)$/gm);
+        if (h2s) {
+          const texts = h2s.map((h) => h.replace(/^## /, ""));
+          setHeadings(texts);
+          setActiveHeading(texts[0]);
+        }
+      })
+      .catch(console.error);
+  }, [projectSlug]);
+
+  const scrollToHeading = useCallback((heading: string) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const h2Elements = container.querySelectorAll("h2");
+    for (const el of h2Elements) {
+      if (el.textContent?.trim() === heading) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        setActiveHeading(heading);
+        break;
+      }
+    }
+  }, []);
+
+  if (content === null) {
+    return (
+      <div
+        className="flex-1 flex items-center justify-center text-[#717182]"
+        style={{ fontFamily: "Poppins, sans-serif" }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 overflow-hidden">
+      {headings.length > 0 && (
+        <div
+          className="flex flex-col gap-0.5 p-3 shrink-0 overflow-y-auto"
+          style={{
+            width: 180,
+            borderRight: "1px solid rgba(0,0,0,0.06)",
+            background: "#fafafa",
+          }}
+        >
+          {headings.map((h) => (
+            <button
+              key={h}
+              onClick={() => scrollToHeading(h)}
+              className="text-left px-2 py-1.5 rounded-[6px] text-[13px] cursor-pointer transition-all"
+              style={{
+                fontFamily: "Poppins, sans-serif",
+                fontWeight: activeHeading === h ? 500 : 400,
+                color: activeHeading === h ? "#FF7F26" : "#717182",
+                background: activeHeading === h ? "#fff7f0" : "transparent",
+              }}
+            >
+              {h}
+            </button>
+          ))}
+        </div>
+      )}
+      <div ref={containerRef} className="flex-1 overflow-y-auto px-8 py-6">
+        <MDXEditor
+          markdown={content}
+          readOnly
+          contentEditableClassName="prose prose-sm max-w-none focus:outline-none"
+          plugins={[
+            headingsPlugin(),
+            listsPlugin(),
+            quotePlugin(),
+            thematicBreakPlugin(),
+            linkPlugin(),
+            tablePlugin(),
+            codeBlockPlugin(),
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function PRDContent({
+  features: apiFeatures,
+  projectSlug,
+}: {
+  features?: FeatureSummary[];
+  projectSlug: string;
+}) {
   const [activeTab, setActiveTab] = useState<TabId>("PRD");
-  const features = toPrdFeatures(apiFeatures);
 
   return (
     <div
@@ -346,7 +217,7 @@ export function PRDContent({ features: apiFeatures }: { features?: FeatureSummar
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
       <div className="flex flex-1 overflow-hidden">
         {activeTab === "PRD" ? (
-          <PrdBody features={features} />
+          <PrdBody projectSlug={projectSlug} />
         ) : activeTab === "Design" ? (
           <DesignContent features={apiFeatures} />
         ) : activeTab === "Features" ? (
