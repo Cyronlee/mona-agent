@@ -5,7 +5,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "cmdk";
 import { Icon } from "@iconify/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   deleteSession,
   getSession,
@@ -26,11 +26,14 @@ type PersistedToolCall = {
   providerMetadata?: unknown;
 };
 
-function newChatKey() {
-  return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
+type ChatMessageMetadata = {
+  sessionId?: string;
+  projectSlug?: string;
+};
 
-function persistedToUIMessages(messages: ChatMessage[]): UIMessage[] {
+type ChatUIMessage = UIMessage<ChatMessageMetadata>;
+
+function persistedToUIMessages(messages: ChatMessage[]): ChatUIMessage[] {
   return messages.map((m) => {
     if (m.role === "user") {
       return {
@@ -39,7 +42,7 @@ function persistedToUIMessages(messages: ChatMessage[]): UIMessage[] {
         parts: [{ type: "text", text: m.content }],
       };
     }
-    const parts: UIMessage["parts"] = [];
+    const parts: ChatUIMessage["parts"] = [];
     if (m.content) {
       parts.push({ type: "text", text: m.content });
     }
@@ -84,10 +87,13 @@ function formatRelativeTime(iso: string): string {
 }
 
 export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
-  const [chatKey, setChatKey] = useState(() => newChatKey());
+  const chatInstanceId = useId();
   const [input, setInput] = useState("");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  // The id the user has explicitly selected from the dropdown. Null means
+  // we're in "New conversation" mode (or, after the first message, the
+  // backend-stamped id is in effect — see `derivedSessionId`).
+  const [explicitSessionId, setExplicitSessionId] = useState<string | null>(null);
   const [activeTitle, setActiveTitle] = useState<string>("New conversation");
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -95,18 +101,64 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, stop, error, setMessages } = useChat({
-    id: chatKey,
-    transport: new DefaultChatTransport({
-      api: `/api/projects/${projectSlug}/chat`,
-    }),
+  // Ref mirror of the active session id. The transport's body resolver
+  // (captured in a useMemo below) reads from this ref at request time so
+  // it always sees the latest value without forcing the chat to recreate.
+  const activeSessionIdRef = useRef<string | null>(null);
+
+  const {
+    messages,
+    sendMessage,
+    status,
+    stop,
+    error,
+    setMessages,
+  } = useChat<ChatUIMessage>({
+    id: chatInstanceId,
+    transport: useMemo(
+      () =>
+        // The body resolver runs at request time (not during render), so
+        // the closure can safely read the ref.
+        // eslint-disable-next-line react-hooks/refs
+        new DefaultChatTransport({
+          api: `/api/projects/${projectSlug}/chat`,
+          body: () => ({ sessionId: activeSessionIdRef.current ?? undefined }),
+        }),
+      [projectSlug],
+    ),
   });
+
+  // After the first message of a new conversation the backend creates a
+  // session and stamps the user message's metadata with its id. Derive the
+  // effective active id from the message history so the new conversation
+  // automatically becomes "active" without recreating the chat.
+  const derivedSessionId = useMemo<string | null>(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user" && m.metadata?.sessionId) {
+        return m.metadata.sessionId;
+      }
+    }
+    return null;
+  }, [messages]);
+  const activeSessionId = explicitSessionId ?? derivedSessionId;
+
+  // Keep the ref in sync with the effective active session id. Writing to
+  // a ref is the canonical "push state to a non-React subscriber" pattern
+  // and does not trigger a re-render.
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
+  }, [activeSessionId]);
 
   const isStreaming = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
+
+  // Track the most recent in-flight load request so out-of-order responses
+  // don't clobber a newer selection.
+  const loadRequestRef = useRef(0);
 
   const isFirstStatusRef = useRef(true);
   useEffect(() => {
@@ -121,6 +173,14 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
         const list = await listSessions(projectSlug);
         if (cancelled) return;
         setSessions(list);
+        // After the server has finalized the turn it may have rewritten the
+        // session title (e.g. first turn of a new conversation). Reflect the
+        // canonical title in the trigger label.
+        const currentActive = activeSessionIdRef.current;
+        if (currentActive) {
+          const found = list.find((s) => s.id === currentActive);
+          if (found) setActiveTitle(found.title);
+        }
       } catch (err) {
         if (!cancelled) console.error("Failed to refresh sessions", err);
       }
@@ -132,9 +192,7 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
 
   const handleNewSession = useCallback(() => {
     setMessages([]);
-    const key = newChatKey();
-    setChatKey(key);
-    setActiveSessionId(null);
+    setExplicitSessionId(null);
     setActiveTitle("New conversation");
     setPopoverOpen(false);
     setSearch("");
@@ -142,26 +200,30 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
 
   const handleSelectSession = useCallback(
     async (sessionId: string) => {
-      if (sessionId === activeSessionId) {
+      if (sessionId === explicitSessionId) {
         setPopoverOpen(false);
         return;
       }
+      const requestId = ++loadRequestRef.current;
       setLoadingSessionId(sessionId);
       try {
         const detail = await getSession(projectSlug, sessionId);
+        if (loadRequestRef.current !== requestId) return;
         setMessages(persistedToUIMessages(detail.messages));
-        setChatKey(sessionId);
-        setActiveSessionId(sessionId);
+        setExplicitSessionId(sessionId);
         setActiveTitle(detail.title);
         setPopoverOpen(false);
         setSearch("");
       } catch (err) {
+        if (loadRequestRef.current !== requestId) return;
         console.error("Failed to load session", err);
       } finally {
-        setLoadingSessionId(null);
+        if (loadRequestRef.current === requestId) {
+          setLoadingSessionId(null);
+        }
       }
     },
-    [activeSessionId, projectSlug, setMessages],
+    [explicitSessionId, projectSlug, setMessages],
   );
 
   const handleDeleteSession = useCallback(

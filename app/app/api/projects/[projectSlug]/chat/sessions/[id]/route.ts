@@ -12,7 +12,7 @@ export async function GET(
     return NextResponse.json({ error: "Session not found" }, { status: 404 })
   }
   const messages = await listMessages(projectSlug, id)
-  return NextResponse.json({ session, messages })
+  return NextResponse.json({ ...session, messages })
 }
 
 export async function DELETE(

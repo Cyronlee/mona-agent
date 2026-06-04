@@ -363,7 +363,7 @@ export function PRDContent({
             className="flex flex-1 overflow-hidden"
             style={{ background: "#f6f6f9", padding: 16, gap: 16 }}
           >
-            <FeatureListPanel features={apiFeatures ?? []} />
+            <FeatureListPanel features={apiFeatures ?? []} projectSlug={projectSlug} />
           </div>
         ) : activeTab === "Code" ? (
           <CodeWorkspace projectSlug={projectSlug} />

@@ -58,9 +58,21 @@ export type SuggestionSummary = {
 
 export type FeatureDetail = {
     meta: FeatureSummary
-    index: { title: string; desc?: string; status?: string; goals?: string[]; content: string } | null
+    index: { title: string; desc?: string; status?: string; goals?: string[]; updatedAt?: string; content: string } | null
     stories: StorySummary[]
     suggestions: SuggestionSummary[]
+}
+
+export type StoryDocument = {
+    slug: string
+    title: string
+    desc?: string
+    status?: string
+    priority?: number
+    order?: number
+    assignee?: string
+    updatedAt?: string
+    content: string
 }
 
 export type ProjectCodeNode = {
@@ -169,7 +181,7 @@ export function getStoryDocument(
     projectSlug: string,
     featureSlug: string,
     storySlug: string,
-): Promise<StorySummary & { content: string }> {
+): Promise<StoryDocument> {
     return apiFetch(`/api/projects/${projectSlug}/features/${featureSlug}/stories/${storySlug}`)
 }
 
