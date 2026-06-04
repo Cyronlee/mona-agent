@@ -127,6 +127,19 @@ async function apiPut<T>(path: string, body: unknown): Promise<T> {
     return res.json() as Promise<T>
 }
 
+async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new ApiError(data.error ?? `Request failed: ${res.status}`, res.status)
+    }
+    return res.json() as Promise<T>
+}
+
 export class ApiError extends Error {
     readonly status: number
     constructor(message: string, status: number) {
@@ -183,6 +196,42 @@ export function getStoryDocument(
     storySlug: string,
 ): Promise<StoryDocument> {
     return apiFetch(`/api/projects/${projectSlug}/features/${featureSlug}/stories/${storySlug}`)
+}
+
+export type FeatureFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    goals: string[] | null
+}>
+
+export function updateFeatureFrontmatter(
+    projectSlug: string,
+    featureSlug: string,
+    patch: FeatureFrontmatterPatch,
+): Promise<FeatureDetail> {
+    return apiPatch(`/api/projects/${projectSlug}/features/${featureSlug}`, patch)
+}
+
+export type StoryFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    priority: number | null
+    order: number | null
+    assignee: string | null
+}>
+
+export function updateStoryFrontmatterPatch(
+    projectSlug: string,
+    featureSlug: string,
+    storySlug: string,
+    patch: StoryFrontmatterPatch,
+): Promise<StoryDocument> {
+    return apiPatch(
+        `/api/projects/${projectSlug}/features/${featureSlug}/stories/${storySlug}`,
+        patch,
+    )
 }
 
 export function getSuggestionDocument(

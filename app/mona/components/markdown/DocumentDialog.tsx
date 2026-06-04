@@ -10,10 +10,18 @@ import {
   DialogBody,
 } from "@/components/ui/dialog";
 import { MarkdownViewer } from "./MarkdownViewer";
-import { FrontmatterPanel } from "./FrontmatterPanel";
+import {
+  FrontmatterPanel,
+  type FrontmatterValue,
+  type FrontmatterChange,
+} from "./FrontmatterPanel";
 import {
   getFeatureDetail,
   getStoryDocument,
+  updateFeatureFrontmatter,
+  updateStoryFrontmatterPatch,
+  type FeatureFrontmatterPatch,
+  type StoryFrontmatterPatch,
 } from "../../api/projects";
 import type {
   FeatureDetail,
@@ -28,6 +36,7 @@ export type DocumentDialogProps =
       title: string;
       open: boolean;
       onOpenChange: (open: boolean) => void;
+      onUpdated?: (data: FeatureDetail) => void;
     }
   | {
       kind: "story";
@@ -37,6 +46,7 @@ export type DocumentDialogProps =
       title: string;
       open: boolean;
       onOpenChange: (open: boolean) => void;
+      onUpdated?: (data: StoryDocument) => void;
     };
 
 const cache = new Map<string, FeatureDetail | StoryDocument>();
@@ -44,15 +54,19 @@ const cache = new Map<string, FeatureDetail | StoryDocument>();
 function FeatureDocumentBody({
   projectSlug,
   featureSlug,
+  onUpdated,
 }: {
   projectSlug: string;
   featureSlug: string;
+  onUpdated?: (data: FeatureDetail) => void;
 }) {
   const key = `feature:${projectSlug}:${featureSlug}`;
   const [data, setData] = useState<FeatureDetail | null>(
     () => (cache.get(key) as FeatureDetail | undefined) ?? null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (data) return;
@@ -62,6 +76,7 @@ function FeatureDocumentBody({
         if (cancelled) return;
         cache.set(key, d);
         setData(d);
+        onUpdated?.(d);
       })
       .catch((e: Error) => {
         if (cancelled) return;
@@ -70,27 +85,72 @@ function FeatureDocumentBody({
     return () => {
       cancelled = true;
     };
-  }, [key, projectSlug, featureSlug, data]);
+  }, [key, projectSlug, featureSlug, data, onUpdated]);
 
   if (error) return <ErrorState message={error} />;
   if (!data) return <LoadingState />;
-  return <ReadyBody data={data} />;
+
+  const handleChange = (change: FrontmatterChange) => {
+    setSaving(true);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[change.key];
+      return next;
+    });
+    const patch: FeatureFrontmatterPatch = {
+      [change.key]: change.value as never,
+    };
+    updateFeatureFrontmatter(projectSlug, featureSlug, patch)
+      .then((d) => {
+        cache.set(`feature:${projectSlug}:${featureSlug}`, d);
+        setData(d);
+        setSaving(false);
+        onUpdated?.(d);
+      })
+      .catch((e: Error) => {
+        setSaving(false);
+        setFieldErrors((prev) => ({ ...prev, [change.key]: e.message }));
+      });
+  };
+
+  const frontmatter: Record<string, FrontmatterValue> = {
+    desc: data.index?.desc,
+    status: data.index?.status,
+    goals: data.index?.goals,
+    updatedAt: data.index?.updatedAt,
+  };
+
+  return (
+    <>
+      <DocumentContent markdown={data.index?.content ?? null} />
+      <DocumentSidePanel
+        fields={frontmatter}
+        onChange={handleChange}
+        saving={saving}
+        errors={fieldErrors}
+      />
+    </>
+  );
 }
 
 function StoryDocumentBody({
   projectSlug,
   featureSlug,
   storySlug,
+  onUpdated,
 }: {
   projectSlug: string;
   featureSlug: string;
   storySlug: string;
+  onUpdated?: (data: StoryDocument) => void;
 }) {
   const key = `story:${projectSlug}:${featureSlug}:${storySlug}`;
   const [data, setData] = useState<StoryDocument | null>(
     () => (cache.get(key) as StoryDocument | undefined) ?? null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (data) return;
@@ -100,6 +160,7 @@ function StoryDocumentBody({
         if (cancelled) return;
         cache.set(key, d);
         setData(d);
+        onUpdated?.(d);
       })
       .catch((e: Error) => {
         if (cancelled) return;
@@ -108,29 +169,35 @@ function StoryDocumentBody({
     return () => {
       cancelled = true;
     };
-  }, [key, projectSlug, featureSlug, storySlug, data]);
+  }, [key, projectSlug, featureSlug, storySlug, data, onUpdated]);
 
   if (error) return <ErrorState message={error} />;
   if (!data) return <LoadingState />;
-  return <ReadyBody data={data} />;
-}
 
-function ReadyBody({ data }: { data: FeatureDetail | StoryDocument }) {
-  if ("index" in data) {
-    const frontmatter = {
-      desc: data.index?.desc,
-      status: data.index?.status,
-      goals: data.index?.goals,
-      updatedAt: data.index?.updatedAt,
+  const handleChange = (change: FrontmatterChange) => {
+    setSaving(true);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[change.key];
+      return next;
+    });
+    const patch: StoryFrontmatterPatch = {
+      [change.key]: change.value as never,
     };
-    return (
-      <>
-        <DocumentContent markdown={data.index?.content ?? null} />
-        <DocumentSidePanel fields={frontmatter} />
-      </>
-    );
-  }
-  const frontmatter = {
+    updateStoryFrontmatterPatch(projectSlug, featureSlug, storySlug, patch)
+      .then((d) => {
+        cache.set(`story:${projectSlug}:${featureSlug}:${storySlug}`, d);
+        setData(d);
+        setSaving(false);
+        onUpdated?.(d);
+      })
+      .catch((e: Error) => {
+        setSaving(false);
+        setFieldErrors((prev) => ({ ...prev, [change.key]: e.message }));
+      });
+  };
+
+  const frontmatter: Record<string, FrontmatterValue> = {
     desc: data.desc,
     status: data.status,
     priority: data.priority,
@@ -138,10 +205,16 @@ function ReadyBody({ data }: { data: FeatureDetail | StoryDocument }) {
     assignee: data.assignee,
     updatedAt: data.updatedAt,
   };
+
   return (
     <>
       <DocumentContent markdown={data.content} />
-      <DocumentSidePanel fields={frontmatter} />
+      <DocumentSidePanel
+        fields={frontmatter}
+        onChange={handleChange}
+        saving={saving}
+        errors={fieldErrors}
+      />
     </>
   );
 }
@@ -163,12 +236,24 @@ function DocumentContent({ markdown }: { markdown: string | null }) {
 
 function DocumentSidePanel({
   fields,
+  onChange,
+  saving,
+  errors,
 }: {
-  fields: Record<string, import("./FrontmatterPanel").FrontmatterValue>;
+  fields: Record<string, FrontmatterValue>;
+  onChange: (change: FrontmatterChange) => void;
+  saving: boolean;
+  errors: Record<string, string>;
 }) {
   return (
-    <div className="w-[260px] shrink-0 border-l border-[rgba(0,0,0,0.08)] bg-[#fafafa]">
-      <FrontmatterPanel fields={fields} className="h-full" />
+    <div className="w-[280px] shrink-0 border-l border-[rgba(0,0,0,0.08)] bg-[#fafafa]">
+      <FrontmatterPanel
+        fields={fields}
+        className="h-full"
+        onChange={onChange}
+        saving={saving}
+        errors={errors}
+      />
     </div>
   );
 }
@@ -187,6 +272,7 @@ export function DocumentDialog(props: DocumentDialogProps) {
               key={`feature:${props.projectSlug}:${props.featureSlug}`}
               projectSlug={props.projectSlug}
               featureSlug={props.featureSlug}
+              onUpdated={props.onUpdated}
             />
           ) : (
             <StoryDocumentBody
@@ -194,6 +280,7 @@ export function DocumentDialog(props: DocumentDialogProps) {
               projectSlug={props.projectSlug}
               featureSlug={props.featureSlug}
               storySlug={props.storySlug}
+              onUpdated={props.onUpdated}
             />
           )}
         </DialogBody>

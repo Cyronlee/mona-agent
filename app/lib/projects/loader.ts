@@ -23,6 +23,7 @@ import {
     PrdFrontmatterSchema,
     FeatureIndexFrontmatterSchema,
     StoryFrontmatterSchema,
+    StoryFrontmatter,
     SuggestionFrontmatterSchema,
 } from "./types"
 
@@ -357,6 +358,84 @@ export function getStoryDocument(projectSlug: string, featureSlug: string, story
     const fm = StoryFrontmatterSchema.safeParse(parsed.data)
     if (!fm.success) throw new ContentError(`Invalid frontmatter for story "${storySlug}"`, 422)
     return { slug: storySlug, ...fm.data, content: parsed.content.trim() }
+}
+
+export type FeatureFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    goals: string[] | null
+}>
+
+export function updateFeatureIndexFrontmatter(
+    projectSlug: string,
+    featureSlug: string,
+    patch: FeatureFrontmatterPatch,
+): FeatureDetail {
+    const meta = requireFeatureMeta(projectSlug, featureSlug)
+    const file = path.join(getProjectsRoot(), projectSlug, "features", featureSlug, "index.md")
+    const parsed = safeReadMd(file)
+    if (!parsed) throw new ContentError(`index.md not found for feature "${featureSlug}"`)
+    const fm = FeatureIndexFrontmatterSchema.safeParse(parsed.data)
+    if (!fm.success) throw new ContentError(`Invalid frontmatter for feature "${featureSlug}"`, 422)
+
+    const next: Record<string, unknown> = { ...fm.data }
+    if (patch.title !== undefined) next.title = patch.title
+    if (patch.desc !== undefined) next.desc = patch.desc ?? undefined
+    if (patch.status !== undefined) next.status = patch.status ?? undefined
+    if (patch.goals !== undefined) next.goals = patch.goals ?? undefined
+    if (Object.keys(next).length === 0) throw new ContentError("patch is empty", 422)
+
+    const validated = FeatureIndexFrontmatterSchema.safeParse(next)
+    if (!validated.success) throw new ContentError(`Invalid patched frontmatter: ${validated.error.message}`, 422)
+
+    next.updatedAt = new Date().toISOString().slice(0, 10)
+    const doc = matter.stringify(parsed.content, next)
+    fs.writeFileSync(file, doc)
+    void meta
+
+    return getFeatureDetail(projectSlug, featureSlug)
+}
+
+export type StoryFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    priority: number | null
+    order: number | null
+    assignee: string | null
+}>
+
+export function updateStoryFrontmatter(
+    projectSlug: string,
+    featureSlug: string,
+    storySlug: string,
+    patch: StoryFrontmatterPatch,
+): StoryDocument {
+    requireFeatureMeta(projectSlug, featureSlug)
+    const file = path.join(getProjectsRoot(), projectSlug, "features", featureSlug, "story", `${storySlug}.md`)
+    const parsed = safeReadMd(file)
+    if (!parsed) throw new ContentError(`Story "${storySlug}" not found in feature "${featureSlug}"`)
+    const fm = StoryFrontmatterSchema.safeParse(parsed.data)
+    if (!fm.success) throw new ContentError(`Invalid frontmatter for story "${storySlug}"`, 422)
+
+    const next: Record<string, unknown> = { ...fm.data }
+    if (patch.title !== undefined) next.title = patch.title
+    if (patch.desc !== undefined) next.desc = patch.desc ?? undefined
+    if (patch.status !== undefined) next.status = patch.status ?? undefined
+    if (patch.priority !== undefined) next.priority = patch.priority ?? undefined
+    if (patch.order !== undefined) next.order = patch.order ?? undefined
+    if (patch.assignee !== undefined) next.assignee = patch.assignee ?? undefined
+    if (Object.keys(next).length === 0) throw new ContentError("patch is empty", 422)
+
+    const validated = StoryFrontmatterSchema.safeParse(next)
+    if (!validated.success) throw new ContentError(`Invalid patched frontmatter: ${validated.error.message}`, 422)
+
+    next.updatedAt = new Date().toISOString().slice(0, 10)
+    const doc = matter.stringify(parsed.content, next)
+    fs.writeFileSync(file, doc)
+
+    return { slug: storySlug, ...(validated.data as StoryFrontmatter), content: parsed.content.trim() }
 }
 
 export function getSuggestionDocument(
