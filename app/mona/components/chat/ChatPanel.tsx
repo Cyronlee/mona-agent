@@ -1,20 +1,98 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "cmdk";
+import { Icon } from "@iconify/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  deleteSession,
+  getSession,
+  listSessions,
+  type ChatMessage,
+  type ChatSession,
+} from "../../api/chat";
 
 type ChatPanelProps = {
   projectSlug?: string;
+};
+
+type PersistedToolCall = {
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
+  result: unknown;
+  providerMetadata?: unknown;
 };
 
 function newChatKey() {
   return `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function persistedToUIMessages(messages: ChatMessage[]): UIMessage[] {
+  return messages.map((m) => {
+    if (m.role === "user") {
+      return {
+        id: m.id,
+        role: "user",
+        parts: [{ type: "text", text: m.content }],
+      };
+    }
+    const parts: UIMessage["parts"] = [];
+    if (m.content) {
+      parts.push({ type: "text", text: m.content });
+    }
+    if (m.toolCallsJson) {
+      try {
+        const tcs = JSON.parse(m.toolCallsJson) as PersistedToolCall[];
+        for (const tc of tcs) {
+          parts.push({
+            type: "dynamic-tool",
+            toolName: tc.toolName,
+            toolCallId: tc.toolCallId,
+            state: "output-available",
+            input: tc.args,
+            output: tc.result,
+            ...(tc.providerMetadata
+              ? { providerMetadata: tc.providerMetadata as never }
+              : {}),
+          });
+        }
+      } catch {
+        // ignore malformed tool call payload
+      }
+    }
+    return { id: m.id, role: "assistant", parts };
+  });
+}
+
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const now = Date.now();
+  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
+  if (diffSec < 45) return "just now";
+  if (diffSec < 90) return "1m ago";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
   const [chatKey, setChatKey] = useState(() => newChatKey());
   const [input, setInput] = useState("");
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeTitle, setActiveTitle] = useState<string>("New conversation");
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status, stop, error, setMessages } = useChat({
@@ -29,6 +107,81 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, status]);
+
+  const isFirstStatusRef = useRef(true);
+  useEffect(() => {
+    if (isFirstStatusRef.current) {
+      isFirstStatusRef.current = false;
+      return;
+    }
+    if (isStreaming) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await listSessions(projectSlug);
+        if (cancelled) return;
+        setSessions(list);
+      } catch (err) {
+        if (!cancelled) console.error("Failed to refresh sessions", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isStreaming, projectSlug]);
+
+  const handleNewSession = useCallback(() => {
+    setMessages([]);
+    const key = newChatKey();
+    setChatKey(key);
+    setActiveSessionId(null);
+    setActiveTitle("New conversation");
+    setPopoverOpen(false);
+    setSearch("");
+  }, [setMessages]);
+
+  const handleSelectSession = useCallback(
+    async (sessionId: string) => {
+      if (sessionId === activeSessionId) {
+        setPopoverOpen(false);
+        return;
+      }
+      setLoadingSessionId(sessionId);
+      try {
+        const detail = await getSession(projectSlug, sessionId);
+        setMessages(persistedToUIMessages(detail.messages));
+        setChatKey(sessionId);
+        setActiveSessionId(sessionId);
+        setActiveTitle(detail.title);
+        setPopoverOpen(false);
+        setSearch("");
+      } catch (err) {
+        console.error("Failed to load session", err);
+      } finally {
+        setLoadingSessionId(null);
+      }
+    },
+    [activeSessionId, projectSlug, setMessages],
+  );
+
+  const handleDeleteSession = useCallback(
+    async (sessionId: string) => {
+      if (pendingDeleteId) return;
+      setPendingDeleteId(sessionId);
+      try {
+        await deleteSession(projectSlug, sessionId);
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        if (sessionId === activeSessionId) {
+          handleNewSession();
+        }
+      } catch (err) {
+        console.error("Failed to delete session", err);
+      } finally {
+        setPendingDeleteId(null);
+      }
+    },
+    [activeSessionId, handleNewSession, pendingDeleteId, projectSlug],
+  );
 
   const submit = () => {
     const text = input.trim();
@@ -49,42 +202,158 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
     }
   };
 
-  const handleNewSession = () => {
-    setMessages([]);
-    setChatKey(newChatKey());
-  };
+  const filteredSessions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sessions;
+    return sessions.filter((s) => s.title.toLowerCase().includes(q));
+  }, [sessions, search]);
+
+  const triggerLabel = activeSessionId ? activeTitle : "Chat with Mona";
 
   return (
     <div className="flex h-full flex-col">
       <div
-        className="flex items-center justify-between shrink-0 pl-4 pr-3"
+        className="flex items-center justify-between shrink-0 pl-3 pr-2"
         style={{
           height: 40,
           borderBottom: "1px solid rgba(0,0,0,0.06)",
         }}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className="rounded-full"
-            style={{
-              width: 6,
-              height: 6,
-              background: isStreaming ? "#facc15" : "#4ade80",
-            }}
-          />
-          <span
-            className="text-[12px] text-[#0a0a0a]"
-            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
-          >
-            Chat with Mona
-          </span>
-        </div>
+        <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <Popover.Trigger asChild>
+            <button
+              type="button"
+              className="group flex items-center gap-1.5 rounded-[6px] px-1.5 py-1 text-left transition-colors hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1e2340]/30"
+              aria-haspopup="listbox"
+              aria-expanded={popoverOpen}
+              aria-label="Select conversation"
+            >
+              <span
+                className="rounded-full shrink-0"
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: isStreaming ? "#facc15" : "#4ade80",
+                }}
+              />
+              <span
+                className="truncate text-[12px] text-[#0a0a0a] max-w-[180px]"
+                style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+                title={triggerLabel}
+              >
+                {triggerLabel}
+              </span>
+              <Icon
+                icon="lucide:chevrons-up-down"
+                width={12}
+                height={12}
+                color="#717182"
+              />
+            </button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              align="start"
+              sideOffset={6}
+              className="z-50 outline-none"
+              style={{
+                width: 320,
+                background: "white",
+                border: "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 12,
+                boxShadow:
+                  "0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)",
+                overflow: "hidden",
+              }}
+            >
+              <Command
+                label="Conversations"
+                shouldFilter={false}
+                className="flex flex-col"
+              >
+                <div
+                  className="flex items-center gap-2 px-3"
+                  style={{
+                    height: 40,
+                    borderBottom: "1px solid rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <Icon
+                    icon="lucide:search"
+                    width={14}
+                    height={14}
+                    color="#717182"
+                  />
+                  <CommandInput
+                    value={search}
+                    onValueChange={setSearch}
+                    placeholder="Search conversations…"
+                    className="flex-1 bg-transparent text-[12px] text-[#0a0a0a] placeholder:text-[#717182] outline-none"
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="flex items-center justify-center rounded-[4px] hover:bg-gray-100"
+                      aria-label="Clear search"
+                    >
+                      <Icon
+                        icon="lucide:x"
+                        width={12}
+                        height={12}
+                        color="#717182"
+                      />
+                    </button>
+                  )}
+                </div>
+                <CommandList
+                  className="overflow-y-auto py-1"
+                  style={{ maxHeight: 320 }}
+                >
+                  <SessionRow
+                    label="New conversation"
+                    icon="lucide:plus"
+                    onSelect={handleNewSession}
+                    active={!activeSessionId}
+                  />
+                  <div
+                    style={{
+                      height: 1,
+                      background: "rgba(0,0,0,0.06)",
+                      margin: "4px 6px",
+                    }}
+                  />
+                  {filteredSessions.length === 0 ? (
+                    <CommandEmpty className="px-3 py-6 text-center text-[12px] text-[#717182]">
+                      {search ? "No matches" : "No conversations yet"}
+                    </CommandEmpty>
+                  ) : (
+                    filteredSessions.map((s) => (
+                      <SessionRow
+                        key={s.id}
+                        session={s}
+                        active={s.id === activeSessionId}
+                        loading={loadingSessionId === s.id}
+                        pendingDelete={pendingDeleteId === s.id}
+                        onSelect={() => handleSelectSession(s.id)}
+                        onDelete={() => handleDeleteSession(s.id)}
+                      />
+                    ))
+                  )}
+                </CommandList>
+              </Command>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
         <button
           onClick={handleNewSession}
           className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 text-[#717182] hover:text-[#0a0a0a] text-[11px] px-2 h-6 transition-colors"
           style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
+          title="Start a new conversation"
         >
-          + New session
+          <Icon icon="lucide:plus" width={12} height={12} className="mr-1" />
+          New
         </button>
       </div>
 
@@ -213,6 +482,121 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
         </div>
       </form>
     </div>
+  );
+}
+
+type SessionRowProps = {
+  label?: string;
+  icon?: string;
+  session?: ChatSession;
+  active: boolean;
+  loading?: boolean;
+  pendingDelete?: boolean;
+  onSelect: () => void;
+  onDelete?: () => void;
+};
+
+function SessionRow({
+  label,
+  icon,
+  session,
+  active,
+  loading,
+  pendingDelete,
+  onSelect,
+  onDelete,
+}: SessionRowProps) {
+  const title = label ?? session?.title ?? "Untitled";
+  const subtitle = session ? formatRelativeTime(session.updatedAt) : "";
+  return (
+    <CommandItem
+      value={session?.id ?? label ?? "new"}
+      onSelect={onSelect}
+      className="group relative mx-1 flex items-center gap-2 rounded-[6px] px-2 py-1.5 cursor-pointer data-[selected=true]:bg-[#f1f5f9] data-[selected=true]:outline-none"
+      style={{
+        height: 40,
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
+      {loading ? (
+        <Icon
+          icon="lucide:loader-circle"
+          width={14}
+          height={14}
+          color="#717182"
+          className="animate-spin shrink-0"
+        />
+      ) : icon ? (
+        <Icon
+          icon={icon}
+          width={14}
+          height={14}
+          color={active ? "#1e2340" : "#0a0a0a"}
+          className="shrink-0"
+        />
+      ) : (
+        <Icon
+          icon="lucide:message-square"
+          width={14}
+          height={14}
+          color={active ? "#1e2340" : "#717182"}
+          className="shrink-0"
+        />
+      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span
+          className="truncate text-[12px]"
+          style={{
+            color: "#0a0a0a",
+            fontWeight: active ? 600 : 400,
+          }}
+        >
+          {title}
+        </span>
+        {subtitle && (
+          <span
+            className="truncate text-[10px] text-[#717182]"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            {subtitle}
+          </span>
+        )}
+      </div>
+      {active && !icon && (
+        <Icon
+          icon="lucide:check"
+          width={12}
+          height={12}
+          color="#1e2340"
+          className="shrink-0"
+        />
+      )}
+      {onDelete && !loading && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete();
+          }}
+          disabled={pendingDelete}
+          aria-label={`Delete conversation ${title}`}
+          className="ml-1 flex h-5 w-5 items-center justify-center rounded-[4px] text-[#717182] opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed"
+          data-disabled={pendingDelete ? "true" : "false"}
+        >
+          {pendingDelete ? (
+            <Icon
+              icon="lucide:loader-circle"
+              width={11}
+              height={11}
+              className="animate-spin"
+            />
+          ) : (
+            <Icon icon="lucide:x" width={11} height={11} />
+          )}
+        </button>
+      )}
+    </CommandItem>
   );
 }
 

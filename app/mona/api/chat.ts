@@ -44,6 +44,17 @@ async function apiFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function apiDelete<T>(path: string): Promise<T> {
+  const res = await fetch(path, { method: "DELETE" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { error?: string }).error ?? `Request failed: ${res.status}`,
+    );
+  }
+  return res.json() as Promise<T>;
+}
+
 export function listSessions(projectSlug: string): Promise<ChatSession[]> {
   return apiFetch(`/api/projects/${projectSlug}/chat/sessions`);
 }
@@ -53,6 +64,13 @@ export function getSession(
   sessionId: string,
 ): Promise<ChatSessionDetail> {
   return apiFetch(`/api/projects/${projectSlug}/chat/sessions/${sessionId}`);
+}
+
+export function deleteSession(
+  projectSlug: string,
+  sessionId: string,
+): Promise<{ ok: true }> {
+  return apiDelete(`/api/projects/${projectSlug}/chat/sessions/${sessionId}`);
 }
 
 export function getJob(

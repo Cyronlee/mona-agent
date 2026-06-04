@@ -240,7 +240,7 @@ export function TopBar({
             className="text-[12px] text-[#717182]"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
-            搜索文档、任务 (⌘K)
+            Search docs, tasks (⌘K)
           </span>
         </div>
       </div>
@@ -261,6 +261,20 @@ export function TopBar({
           <HelpIcon />
         </button>
         <button
+          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50"
+          style={{ width: 28, height: 28 }}
+          aria-label="Share"
+        >
+          <Icon icon="lucide:share" width={14} height={14} color="#717182" />
+        </button>
+        <button
+          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50"
+          style={{ width: 28, height: 28 }}
+          aria-label="Settings"
+        >
+          <Icon icon="lucide:settings" width={14} height={14} color="#717182" />
+        </button>
+        <button
           onClick={onToggleRightPanel}
           className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 transition-colors"
           style={{
@@ -271,25 +285,6 @@ export function TopBar({
           aria-label={rightPanelOpen ? "Collapse AI panel" : "Expand AI panel"}
         >
           <PanelToggleIcon side="right" open={rightPanelOpen} />
-        </button>
-        <button
-          className="flex items-center gap-1 px-2 rounded-[8px] text-[12px] text-[#0a0a0a] cursor-pointer hover:bg-gray-50"
-          style={{
-            height: 28,
-            border: "1px solid rgba(0,0,0,0.1)",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 500,
-          }}
-        >
-          <Icon icon="lucide:share" width={12} height={12} color="#717182" />
-          Share
-        </button>
-        <button
-          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50"
-          style={{ width: 28, height: 28 }}
-          aria-label="Settings"
-        >
-          <Icon icon="lucide:settings" width={14} height={14} color="#717182" />
         </button>
       </div>
     </header>

@@ -107,3 +107,24 @@ export async function touchSession(
 ): Promise<void> {
   await updateSession(projectSlug, sessionId, {})
 }
+
+export async function deleteSession(
+  projectSlug: string,
+  sessionId: string,
+): Promise<boolean> {
+  await ensureSessionsDir(projectSlug)
+  const jsonPath = sessionJsonPath(projectSlug, sessionId)
+  const jsonlPath = sessionJsonlPath(projectSlug, sessionId)
+  const results = await Promise.allSettled([
+    fs.unlink(jsonPath),
+    fs.unlink(jsonlPath),
+  ])
+  const jsonRemoved = results[0].status === "fulfilled"
+  const jsonlMissing =
+    results[1].status === "rejected" &&
+    (results[1] as PromiseRejectedResult).reason instanceof Error &&
+    ((results[1] as PromiseRejectedResult).reason as NodeJS.ErrnoException).code ===
+      "ENOENT"
+  const jsonlRemoved = results[1].status === "fulfilled" || jsonlMissing
+  return jsonRemoved && jsonlRemoved
+}

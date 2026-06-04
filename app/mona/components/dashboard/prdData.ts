@@ -26,8 +26,8 @@ export const FALLBACK_FEATURES: FeatureRow[] = [
   },
   { name: "Request & Matching System", count: 3, expanded: false },
   {
-    name: "The Global Marketplace Feed (",
-    count: 3,
+    name: "The Global Marketplace Feed",
+    count: 4,
     expanded: true,
     items: [
       { num: "037", priority: 1, label: "Explore Tab (Curated Feed)", status: "in-progress" as const },
@@ -40,6 +40,16 @@ export const FALLBACK_FEATURES: FeatureRow[] = [
   { name: "Navigation bar", count: 2, expanded: false },
   { name: "Sign Up", count: 3, expanded: false },
 ];
+
+export function toPrdFeatures(api?: FeatureSummary[]): FeatureRow[] {
+  if (!api) return FALLBACK_FEATURES;
+  return api.map((f) => ({
+    name: f.title,
+    count: f.storyCount,
+    expanded: false,
+    items: undefined,
+  }));
+}
 
 export type DesignStatus = "Done" | "WIP" | "Paused";
 
@@ -58,16 +68,6 @@ export const FALLBACK_DESIGN_FEATURES: DesignFeature[] = [
   { name: "Navigation bar", count: 2, status: "Done" },
   { name: "Sign Up", count: 3, status: "WIP" },
 ];
-
-export function toPrdFeatures(api?: FeatureSummary[]): FeatureRow[] {
-  if (!api) return FALLBACK_FEATURES;
-  return api.map((f) => ({
-    name: f.title,
-    count: f.storyCount,
-    expanded: false,
-    items: undefined,
-  }));
-}
 
 export function toDesignFeatures(api?: FeatureSummary[]): DesignFeature[] {
   if (!api) return FALLBACK_DESIGN_FEATURES;

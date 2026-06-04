@@ -1,118 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
-import { ToolBoxIcon } from "./dashboardIcons";
-import { toDesignFeatures, type DesignFeature, type DesignStatus } from "./prdData";
 
 const DESIGN_TABS = ["Prototype", "Design system"];
-
-function StatusIcon({ type }: { type: DesignStatus }) {
-  if (type === "Done") {
-    return (
-      <div
-        className="flex items-center justify-center rounded-full shrink-0"
-        style={{ width: 24, height: 24, background: "#002557" }}
-      >
-        <Icon icon="lucide:check" width={12} height={12} color="white" />
-      </div>
-    );
-  }
-  if (type === "WIP") {
-    return (
-      <div
-        className="flex items-center justify-center rounded-full shrink-0"
-        style={{ width: 24, height: 24, background: "#FF7F26" }}
-      >
-        <Icon icon="lucide:minus" width={12} height={12} color="white" />
-      </div>
-    );
-  }
-  return (
-    <div
-      className="flex items-center justify-center rounded-full shrink-0"
-      style={{ width: 24, height: 24, background: "#ececf0" }}
-    >
-      <Icon icon="lucide:pause" width={12} height={12} color="#717182" />
-    </div>
-  );
-}
-
-function FeatureList({
-  features,
-}: {
-  features: DesignFeature[];
-}) {
-  return (
-    <div className="flex flex-col p-4 gap-2">
-      {features.map((f) => (
-        <div
-          key={f.name}
-          className="flex items-center gap-2 p-2 rounded-[10px] border border-[rgba(0,0,0,0.1)] hover:bg-gray-50 cursor-pointer transition-colors"
-        >
-          <StatusIcon type={f.status} />
-          <span
-            className="flex-1 text-[14px] text-[#0a0a0a] truncate"
-            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
-          >
-            {f.name}
-          </span>
-          <span
-            className="flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#717182]"
-            style={{
-              background: "#eef3f2",
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 500,
-            }}
-          >
-            {f.count}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FeatureListPanel({ features }: { features: DesignFeature[] }) {
-  return (
-    <div
-      className="flex flex-col shrink-0 overflow-y-auto rounded-[12px] bg-white"
-      style={{
-        width: 280,
-        border: "1px solid rgba(0,0,0,0.1)",
-        boxShadow: "0px 0px 3px rgba(144,151,161,0.1)",
-      }}
-    >
-      <div
-        className="flex items-center justify-between px-4 py-2 border-b border-[rgba(0,0,0,0.1)] shrink-0"
-        style={{ height: 40 }}
-      >
-        <div className="flex items-center gap-2">
-          <ToolBoxIcon />
-          <span
-            className="text-[14px] text-[#0a0a0a]"
-            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
-          >
-            Feature
-          </span>
-          <span
-            className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]"
-            style={{
-              background: "#eceef2",
-              height: 22,
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 500,
-            }}
-          >
-            {features.length}
-          </span>
-        </div>
-        <button className="hover:opacity-70">
-          <Icon icon="lucide:more-vertical" width={14} height={14} color="#717182" />
-        </button>
-      </div>
-      <FeatureList features={features} />
-    </div>
-  );
-}
 
 function PrototypeSkeletons() {
   return (
@@ -190,20 +79,14 @@ function DesignTabs({
   );
 }
 
-export function DesignContent({
-  features: apiFeatures,
-}: {
-  features?: Parameters<typeof toDesignFeatures>[0];
-}) {
+export function DesignContent() {
   const [activeDesignTab, setActiveDesignTab] = useState(DESIGN_TABS[0]);
-  const features = toDesignFeatures(apiFeatures);
 
   return (
     <div
-      className="flex flex-1 overflow-hidden"
-      style={{ background: "#f6f6f9", padding: 16, gap: 16 }}
+      className="flex flex-col flex-1 overflow-hidden"
+      style={{ background: "#f6f6f9", padding: 16 }}
     >
-      <FeatureListPanel features={features} />
       <div className="flex flex-col flex-1 overflow-hidden rounded-[12px] bg-white border border-[#e5e5e5] shadow-[0px_0px_3px_rgba(144,151,161,0.1)]">
         <DesignTabs activeTab={activeDesignTab} onChange={setActiveDesignTab} />
         <PrototypePanel />

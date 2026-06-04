@@ -89,7 +89,6 @@ export function Dashboard({
         </main>
         {rightPanelOpen && (
           <RightPanel
-            onClose={() => setRightPanelOpen(false)}
             projectSlug={projectSlug}
           />
         )}

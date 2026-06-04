@@ -49,10 +49,10 @@ function ChevronIcon({ open }: { open: boolean }) {
     )
 }
 
-// ---- Expand all icon (top-right corner button) ----
+// ---- Panel toggle icon (top-right corner) ----
 
-function ExpandAllIcon() {
-    return <Icon icon="lucide:maximize-2" width={18} height={18} color="#717182" />
+function PanelToggleIcon() {
+    return <Icon icon="lucide:panel-right-open" width={18} height={18} color="#717182" />
 }
 
 // ---- Single story card ----
@@ -63,7 +63,7 @@ function StoryCard({ story, index }: { story: StorySummary; index: number }) {
     const priority = story.priority
     return (
         <div
-            className="flex flex-col gap-1.5 px-4 py-3 cursor-pointer rounded-[8px] transition-colors bg-white"
+            className="flex flex-col gap-1.5 px-4 py-3 cursor-pointer rounded-[8px] transition-colors bg-white hover:border-[#d4d4dc]"
             style={{
                 border: "1px solid rgba(0,0,0,0.08)",
             }}
@@ -71,15 +71,20 @@ function StoryCard({ story, index }: { story: StorySummary; index: number }) {
             <div className="flex items-center gap-2">
                 <StoryStatusIcon status={status} />
                 <span
-                    className="text-[12px] text-[#717182]"
+                    className="text-[12px] text-[#717182] tabular-nums"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                     {num}
                 </span>
                 {priority != null && (
                     <span
-                        className="text-[12px] text-[#717182]"
-                        style={{ fontFamily: "Poppins, sans-serif" }}
+                        className="text-[12px] text-[#717182] rounded-[4px] px-1.5"
+                        style={{
+                            fontFamily: "Poppins, sans-serif",
+                            background: "rgba(0,0,0,0.03)",
+                            border: "1px solid rgba(0,0,0,0.06)",
+                            lineHeight: "16px",
+                        }}
                     >
                         Priority {priority}
                     </span>
@@ -113,6 +118,7 @@ function FeatureItem({
             style={{
                 border: expanded ? "1.5px solid #FF7F26" : "1px solid rgba(0,0,0,0.08)",
                 background: "white",
+                boxShadow: expanded ? "0 0 0 1px rgba(255,127,38,0.04)" : "none",
             }}
         >
             {/* Feature header row */}
@@ -131,7 +137,7 @@ function FeatureItem({
                     {feature.title}
                 </span>
                 <span
-                    className="flex items-center justify-center rounded-[6px] px-2 text-[13px] text-[#0a0a0a]"
+                    className="flex items-center justify-center rounded-[6px] px-2 text-[13px] text-[#0a0a0a] tabular-nums"
                     style={{
                         background: "#f0f0f5",
                         height: 22,
@@ -148,10 +154,7 @@ function FeatureItem({
             {/* Expanded: story cards section */}
             {expanded && stories.length > 0 && (
                 <>
-                    <div
-                        className="px-4 py-2"
-                        style={{ borderTop: "1px solid rgba(255,127,38,0.2)", background: "#fffaf6" }}
-                    >
+                    <div className="px-4 pt-3 pb-1.5">
                         <span
                             className="text-[12px] text-[#717182]"
                             style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
@@ -159,7 +162,7 @@ function FeatureItem({
                             Story Cards
                         </span>
                     </div>
-                    <div className="flex flex-col gap-2 px-4 py-3" style={{ background: "white" }}>
+                    <div className="flex flex-col gap-2 px-4 pb-3" style={{ background: "white" }}>
                         {stories.map((story, i) => (
                             <StoryCard key={story.slug} story={story} index={i} />
                         ))}
@@ -225,7 +228,7 @@ export function FeaturesContent({
                     Feature
                 </span>
                 <span
-                    className="flex items-center justify-center rounded-[6px] px-2 text-[13px] text-[#0a0a0a]"
+                    className="flex items-center justify-center rounded-[6px] px-2 text-[13px] text-[#0a0a0a] tabular-nums"
                     style={{
                         background: "#f0f0f5",
                         height: 22,
@@ -241,7 +244,7 @@ export function FeaturesContent({
                     style={{ width: 28, height: 28 }}
                     aria-label="Toggle panel view"
                 >
-                    <ExpandAllIcon />
+                    <PanelToggleIcon />
                 </button>
             </div>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Icon } from "@iconify/react";
-import { CodeWorkspace } from "./CodeWorkspace";
 import {
   MDXEditor,
   headingsPlugin,
@@ -24,8 +23,9 @@ import {
 import "@mdxeditor/editor/style.css";
 import { getProjectPrd, updateProjectPrd } from "../../api/projects";
 import type { FeatureSummary } from "../../api/projects";
+import { CodeWorkspace } from "./CodeWorkspace";
 import { DesignContent } from "./DesignContent";
-import { FeaturesContent } from "./FeaturesContent";
+import { FeatureListPanel } from "./FeatureListPanel";
 
 function EyeIcon({ color }: { color: string }) {
   return <Icon icon="lucide:eye" width={14} height={14} color={color} />;
@@ -346,19 +346,6 @@ export function PRDContent({
   projectSlug: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("PRD");
-  let body: React.ReactNode;
-
-  if (activeTab === "PRD") {
-    body = <PrdBody projectSlug={projectSlug} />;
-  } else if (activeTab === "Design") {
-    body = <DesignContent features={apiFeatures} />;
-  } else if (activeTab === "Features") {
-    body = <FeaturesContent features={apiFeatures} />;
-  } else if (activeTab === "Code") {
-    body = <CodeWorkspace projectSlug={projectSlug} />;
-  } else {
-    body = <PlaceholderBody label={activeTab} />;
-  }
 
   return (
     <div
@@ -366,7 +353,24 @@ export function PRDContent({
       style={{ background: "white" }}
     >
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
-      <div className="flex flex-1 overflow-hidden">{body}</div>
+      <div className="flex flex-1 overflow-hidden">
+        {activeTab === "PRD" ? (
+          <PrdBody projectSlug={projectSlug} />
+        ) : activeTab === "Design" ? (
+          <DesignContent />
+        ) : activeTab === "Features" ? (
+          <div
+            className="flex flex-1 overflow-hidden"
+            style={{ background: "#f6f6f9", padding: 16, gap: 16 }}
+          >
+            <FeatureListPanel features={apiFeatures ?? []} />
+          </div>
+        ) : activeTab === "Code" ? (
+          <CodeWorkspace projectSlug={projectSlug} />
+        ) : (
+          <PlaceholderBody label={activeTab} />
+        )}
+      </div>
     </div>
   );
 }

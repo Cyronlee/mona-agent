@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react";
 import { useResizableWidth } from "./useResizableWidth";
 import { ChatPanel } from "../chat/ChatPanel";
 
@@ -34,11 +33,10 @@ function ResizeHandle({
 }
 
 type RightPanelProps = {
-  onClose: () => void;
   projectSlug: string;
 };
 
-export function RightPanel({ onClose, projectSlug }: RightPanelProps) {
+export function RightPanel({ projectSlug }: RightPanelProps) {
   const { width, onMouseDown } = useResizableWidth(PANEL_OPTIONS);
 
   return (
@@ -51,14 +49,6 @@ export function RightPanel({ onClose, projectSlug }: RightPanelProps) {
       }}
     >
       <ResizeHandle onMouseDown={onMouseDown} />
-      <button
-        onClick={onClose}
-        className="absolute top-2 right-2 z-20 flex items-center justify-center rounded-[8px] hover:bg-gray-50"
-        style={{ width: 24, height: 24 }}
-        aria-label="Close chat panel"
-      >
-        <Icon icon="lucide:x" width={14} height={14} color="#717182" />
-      </button>
       <ChatPanel projectSlug={projectSlug} />
     </aside>
   );
