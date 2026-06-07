@@ -90,6 +90,12 @@ export type ProjectCodeFile = {
     updatedAt: string
 }
 
+export type ProjectPreviewState = {
+    url: string
+    status: "idle" | "running" | "ready" | "error"
+    pid: number | null
+}
+
 // ── Fetchers ──────────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -167,6 +173,24 @@ export function getProjectPrd(projectSlug: string): Promise<{ title: string; con
 
 export function updateProjectPrd(projectSlug: string, content: string): Promise<{ title: string; content: string }> {
     return apiPut(`/api/projects/${projectSlug}/prd`, { content })
+}
+
+export function getProjectPreview(projectSlug: string): Promise<ProjectPreviewState> {
+    return apiFetch(`/api/projects/${projectSlug}/preview`)
+}
+
+export function updateProjectPreview(
+    projectSlug: string,
+    payload: ProjectPreviewState,
+): Promise<ProjectPreviewState> {
+    return apiPut(`/api/projects/${projectSlug}/preview`, payload)
+}
+
+export function patchProjectPreview(
+    projectSlug: string,
+    payload: Partial<ProjectPreviewState>,
+): Promise<ProjectPreviewState> {
+    return apiPatch(`/api/projects/${projectSlug}/preview`, payload)
 }
 
 export function listFeatures(projectSlug: string): Promise<FeatureSummary[]> {

@@ -9,7 +9,7 @@ import type {
 } from "../../api/projects";
 import { BottomBar } from "./BottomBar";
 import { InboxPanel } from "./InboxPanel";
-import { PRDContent } from "./PRDContent";
+import { ProjectWorkspaceContent } from "./ProjectWorkspaceContent";
 import { RightPanel } from "./RightPanel";
 import { TopBar } from "./TopBar";
 
@@ -82,7 +82,7 @@ export function Dashboard({
           className="flex flex-1 overflow-hidden"
           style={{ background: "#ffffff" }}
         >
-          <PRDContent
+          <ProjectWorkspaceContent
             features={features.length > 0 ? features : undefined}
             projectSlug={projectSlug}
           />

@@ -21,6 +21,8 @@ import {
     ProjectMetaSchema,
     FeatureMetaSchema,
     PrdFrontmatterSchema,
+    ProjectPreviewState,
+    ProjectPreviewStateSchema,
     FeatureIndexFrontmatterSchema,
     StoryFrontmatterSchema,
     StoryFrontmatter,
@@ -102,6 +104,12 @@ function listMdSlugs(dirPath: string): string[] {
     } catch {
         return []
     }
+}
+
+function writeJsonAtomicSync(filePath: string, data: unknown): void {
+    const tmpPath = `${filePath}.tmp`
+    fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8")
+    fs.renameSync(tmpPath, filePath)
 }
 
 // ── Validated meta accessors ──────────────────────────────────────────────────
@@ -307,6 +315,66 @@ export function updateProjectPrd(projectSlug: string, content: string): PrdDocum
     const doc = matter.stringify(content, { ...fm.data, updatedAt: new Date().toISOString().slice(0, 10) })
     fs.writeFileSync(file, doc)
     return { ...fm.data, content: content.trim() }
+}
+
+function previewStatePath(projectSlug: string): string {
+    return path.join(getProjectsRoot(), projectSlug, "preview.json")
+}
+
+function defaultPreviewState(): ProjectPreviewState {
+    return {
+        url: "",
+        status: "idle",
+        pid: null,
+    }
+}
+
+export function getProjectPreviewState(projectSlug: string): ProjectPreviewState {
+    requireProjectMeta(projectSlug)
+    const filePath = previewStatePath(projectSlug)
+    const raw = safeReadJson<unknown>(filePath)
+    if (!raw) return defaultPreviewState()
+
+    const parsed = ProjectPreviewStateSchema.safeParse(raw)
+    if (!parsed.success) {
+        throw new ContentError(`Invalid preview.json for "${projectSlug}": ${parsed.error.message}`, 422)
+    }
+    return parsed.data
+}
+
+export function updateProjectPreviewState(
+    projectSlug: string,
+    input: ProjectPreviewState,
+): ProjectPreviewState {
+    requireProjectMeta(projectSlug)
+    const parsed = ProjectPreviewStateSchema.safeParse(input)
+    if (!parsed.success) {
+        throw new ContentError(`Invalid preview payload: ${parsed.error.message}`, 422)
+    }
+
+    const filePath = previewStatePath(projectSlug)
+    writeJsonAtomicSync(filePath, parsed.data)
+    return parsed.data
+}
+
+export function patchProjectPreviewState(
+    projectSlug: string,
+    patch: Partial<ProjectPreviewState>,
+): ProjectPreviewState {
+    const current = getProjectPreviewState(projectSlug)
+    const next = {
+        ...current,
+        ...patch,
+    }
+
+    const parsed = ProjectPreviewStateSchema.safeParse(next)
+    if (!parsed.success) {
+        throw new ContentError(`Invalid preview payload: ${parsed.error.message}`, 422)
+    }
+
+    const filePath = previewStatePath(projectSlug)
+    writeJsonAtomicSync(filePath, parsed.data)
+    return parsed.data
 }
 
 export function listFeatures(projectSlug: string): FeatureSummary[] {

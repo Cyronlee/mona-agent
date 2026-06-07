@@ -59,6 +59,19 @@ export const SuggestionFrontmatterSchema = z.object({
     updatedAt: z.string().optional(),
 })
 
+export const ProjectPreviewStatusSchema = z.enum([
+    "idle",
+    "running",
+    "ready",
+    "error",
+])
+
+export const ProjectPreviewStateSchema = z.object({
+    url: z.string(),
+    status: ProjectPreviewStatusSchema,
+    pid: z.number().int().nullable(),
+})
+
 // ── Inferred types ────────────────────────────────────────────────────────────
 
 export type ProjectMeta = z.infer<typeof ProjectMetaSchema>
@@ -67,6 +80,7 @@ export type PrdFrontmatter = z.infer<typeof PrdFrontmatterSchema>
 export type FeatureIndexFrontmatter = z.infer<typeof FeatureIndexFrontmatterSchema>
 export type StoryFrontmatter = z.infer<typeof StoryFrontmatterSchema>
 export type SuggestionFrontmatter = z.infer<typeof SuggestionFrontmatterSchema>
+export type ProjectPreviewState = z.infer<typeof ProjectPreviewStateSchema>
 
 // ── API response types ────────────────────────────────────────────────────────
 

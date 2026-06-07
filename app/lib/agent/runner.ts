@@ -26,6 +26,18 @@ type UIMessageWithMeta = UIMessage<{ sessionId: string; projectSlug: string }>
 
 const MODEL_ID = process.env.GEMINI_MODEL ?? "gemini-2.5-flash"
 
+function buildSystemPrompt(projectSlug: string): string {
+  return [
+    "You are Mona, a coding and product assistant working inside a project workspace.",
+    "Prefer concrete, minimal changes and keep outputs actionable.",
+    "",
+    "Preview runtime context:",
+    `- Project preview state is stored at preview.json.`,
+    "- preview.json schema: { url: string, status: 'idle'|'running'|'ready'|'error', pid: number|null }.",
+    "- Update preview.json when preview runtime state changes (start, ready, fail, stop) so UI can render accurate preview status.",
+  ].join("\n")
+}
+
 function getModel() {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
   if (!apiKey) {
@@ -105,6 +117,7 @@ export class AgentRunner {
 
     const result = streamText({
       model: getModel(),
+      system: buildSystemPrompt(projectSlug),
       messages: history,
       tools: agentTools,
       stopWhen: isLoopFinished(),
@@ -118,14 +131,14 @@ export class AgentRunner {
 
           const toolCallsJson = hasTool
             ? JSON.stringify(
-                step.toolCalls.map((tc, i) => ({
-                  toolCallId: tc.toolCallId,
-                  toolName: tc.toolName,
-                  args: tc.input,
-                  result: step.toolResults?.[i]?.output,
-                  providerMetadata: tc.providerMetadata,
-                })),
-              )
+              step.toolCalls.map((tc, i) => ({
+                toolCallId: tc.toolCallId,
+                toolName: tc.toolName,
+                args: tc.input,
+                result: step.toolResults?.[i]?.output,
+                providerMetadata: tc.providerMetadata,
+              })),
+            )
             : null
 
           newRows.push({
