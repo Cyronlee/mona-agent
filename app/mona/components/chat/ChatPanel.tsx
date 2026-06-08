@@ -129,15 +129,15 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
   });
 
   // After the first message of a new conversation the backend creates a
-  // session and stamps the user message's metadata with its id. Derive the
-  // effective active id from the message history so the new conversation
+  // session and stamps the assistant response's metadata with its id. Derive
+  // the effective active id from the message history so the new conversation
   // automatically becomes "active" without recreating the chat.
+  // NOTE: messageMetadata from the stream is attached to the assistant message
+  // (not the user message), so we search all roles.
   const derivedSessionId = useMemo<string | null>(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m.role === "user" && m.metadata?.sessionId) {
-        return m.metadata.sessionId;
-      }
+      const sessionId = messages[i].metadata?.sessionId;
+      if (sessionId) return sessionId;
     }
     return null;
   }, [messages]);
@@ -704,16 +704,16 @@ function MessageBubble({ message }: { message: BubbleMessage }) {
         style={
           isUser
             ? {
-                background: "#1e2340",
-                color: "white",
-                fontFamily: "Inter, sans-serif",
-              }
+              background: "#1e2340",
+              color: "white",
+              fontFamily: "Inter, sans-serif",
+            }
             : {
-                background: "white",
-                border: "1px solid rgba(0,0,0,0.06)",
-                color: "#0a0a0a",
-                fontFamily: "Inter, sans-serif",
-              }
+              background: "white",
+              border: "1px solid rgba(0,0,0,0.06)",
+              color: "#0a0a0a",
+              fontFamily: "Inter, sans-serif",
+            }
         }
       >
         {message.parts.map((part, i) => (
@@ -740,7 +740,7 @@ function MessagePart({ part }: { part: Record<string, unknown> }) {
         <summary className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-[#475569] hover:bg-slate-50 transition-colors list-none select-none outline-none [&::-webkit-details-marker]:hidden">
           <Icon icon="lucide:brain-circuit" width={12} height={12} className="text-[#8b5cf6]" />
           <span className="font-medium text-[10px] text-[#0f172a]">Reasoning</span>
-           <Icon icon="lucide:chevron-right" width={12} height={12} className="ml-auto opacity-50 transition-transform group-open:rotate-90" />
+          <Icon icon="lucide:chevron-right" width={12} height={12} className="ml-auto opacity-50 transition-transform group-open:rotate-90" />
         </summary>
         <div
           className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 whitespace-pre-wrap break-words italic text-[11px] max-h-[250px] overflow-y-auto"

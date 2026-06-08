@@ -1,6 +1,5 @@
 import fs from "node:fs/promises"
 import path from "node:path"
-import { nanoid } from "nanoid"
 import {
   sessionsDir,
   sessionJsonPath,
@@ -63,8 +62,9 @@ export async function createSession(
 ): Promise<ChatSession> {
   await ensureSessionsDir(projectSlug)
   const now = new Date().toISOString()
+  const id = now.replace(/[-:.TZ]/g, "")
   const session: ChatSession = {
-    id: nanoid(),
+    id,
     title: title.slice(0, 60),
     projectSlug,
     createdAt: now,
@@ -124,7 +124,7 @@ export async function deleteSession(
     results[1].status === "rejected" &&
     (results[1] as PromiseRejectedResult).reason instanceof Error &&
     ((results[1] as PromiseRejectedResult).reason as NodeJS.ErrnoException).code ===
-      "ENOENT"
+    "ENOENT"
   const jsonlRemoved = results[1].status === "fulfilled" || jsonlMissing
   return jsonRemoved && jsonlRemoved
 }
