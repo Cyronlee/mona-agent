@@ -8,7 +8,7 @@ import {
   type UIMessageStreamWriter,
   type UIMessage,
 } from "ai"
-import { agentTools } from "./tools"
+import { buildAgentTools } from "./tools"
 import {
   createSession,
   getSession,
@@ -119,7 +119,7 @@ export class AgentRunner {
       model: getModel(),
       system: buildSystemPrompt(projectSlug),
       messages: history,
-      tools: agentTools,
+      tools: buildAgentTools(projectSlug),
       stopWhen: isLoopFinished(),
       onFinish: async ({ steps }) => {
         const newRows: Array<Omit<PersistedMessage, "id" | "createdAt">> = []
