@@ -43,7 +43,7 @@ export async function POST(
     )
   }
 
-  const sessionId = (body.id ?? body.sessionId ?? null) as string | null
+  const sessionId = (body.sessionId ?? null) as string | null
 
   return AgentRunner.run(projectSlug, sessionId, userText)
 }

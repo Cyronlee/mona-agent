@@ -46,7 +46,7 @@ export function SetupStep({
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
-      <div className="relative flex flex-col items-center px-6 py-10">
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-10">
         <div className="flex w-full flex-col gap-8" style={{ maxWidth: 880 }}>
           <MonkeyIntro
             title="One last step"

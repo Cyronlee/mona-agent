@@ -162,6 +162,24 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
 
   const isFirstStatusRef = useRef(true);
   useEffect(() => {
+    // Load sessions on initial mount so the popover is populated before any
+    // message is sent.
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await listSessions(projectSlug);
+        if (!cancelled) setSessions(list);
+      } catch (err) {
+        if (!cancelled) console.error("Failed to load sessions on mount", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectSlug]);
+
+  useEffect(() => {
     if (isFirstStatusRef.current) {
       isFirstStatusRef.current = false;
       return;
@@ -258,6 +276,7 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submit();
@@ -717,16 +736,15 @@ function MessagePart({ part }: { part: Record<string, unknown> }) {
   if (type === "reasoning") {
     const text = (part.text as string | undefined) ?? "";
     return (
-      <details className="mt-1 text-[11px]">
-        <summary
-          className="cursor-pointer text-[#717182] hover:text-[#0a0a0a] list-none"
-          style={{ fontFamily: "Inter, sans-serif" }}
-        >
-          Reasoning
+      <details className="mt-2 text-[11px] rounded-[8px] bg-white border border-[#e2e8f0] shadow-sm transition-all group overflow-hidden">
+        <summary className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-[#475569] hover:bg-slate-50 transition-colors list-none select-none outline-none [&::-webkit-details-marker]:hidden">
+          <Icon icon="lucide:brain-circuit" width={12} height={12} className="text-[#8b5cf6]" />
+          <span className="font-medium text-[10px] text-[#0f172a]">Reasoning</span>
+           <Icon icon="lucide:chevron-right" width={12} height={12} className="ml-auto opacity-50 transition-transform group-open:rotate-90" />
         </summary>
         <div
-          className="mt-1 whitespace-pre-wrap break-words italic"
-          style={{ color: "#4b5563", fontFamily: "Inter, sans-serif" }}
+          className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 whitespace-pre-wrap break-words italic text-[11px] max-h-[250px] overflow-y-auto"
+          style={{ color: "#475569", fontFamily: "Inter, sans-serif" }}
         >
           {text}
         </div>
@@ -755,37 +773,39 @@ function MessagePart({ part }: { part: Record<string, unknown> }) {
     const isOutputError = state === "output-error";
     return (
       <details
-        className="mt-1 text-[11px] rounded-md px-2 py-1"
-        style={{
-          background: "rgba(0,0,0,0.03)",
-          border: "1px solid rgba(0,0,0,0.06)",
-          fontFamily: "Inter, sans-serif",
-        }}
+        className="mt-2 text-[11px] rounded-[8px] overflow-hidden bg-white border border-[#e2e8f0] shadow-sm transition-all group"
+        style={{ fontFamily: "Inter, sans-serif" }}
       >
-        <summary className="cursor-pointer flex items-center gap-1.5 text-[#0a0a0a] list-none">
-          <span style={{ fontSize: 10 }}>⚙</span>
-          <span style={{ fontWeight: 500 }}>{toolName}</span>
-          {isInputStreaming && <span className="text-[#717182]">…</span>}
-          {isOutputAvailable && <span className="text-green-600">✓</span>}
-          {isOutputError && <span className="text-red-600">✗</span>}
+        <summary className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-[#475569] hover:bg-slate-50 transition-colors list-none select-none outline-none [&::-webkit-details-marker]:hidden">
+          {isInputStreaming ? (
+            <Icon icon="lucide:loader-circle" width={12} height={12} className="animate-spin text-[#3b82f6]" />
+          ) : isOutputError ? (
+            <Icon icon="lucide:x-circle" width={12} height={12} className="text-[#ef4444]" />
+          ) : isOutputAvailable ? (
+            <Icon icon="lucide:check-circle" width={12} height={12} className="text-[#10b981]" />
+          ) : (
+            <Icon icon="lucide:wrench" width={12} height={12} className="text-[#64748b]" />
+          )}
+          <span className="font-mono text-[10px] font-medium text-[#0f172a]">{toolName}</span>
+          <Icon icon="lucide:chevron-right" width={12} height={12} className="ml-auto opacity-50 transition-transform group-open:rotate-90" />
         </summary>
-        <div className="mt-1.5 grid grid-cols-[60px_1fr] gap-x-2 gap-y-1 text-[10px]">
-          <span className="text-[#717182]">Input</span>
+        <div className="border-t border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-[10px]">
+          <span className="text-[#64748b] font-medium uppercase tracking-wider text-[9px] mt-0.5">Input</span>
           <pre
-            className="whitespace-pre-wrap break-words text-[#0a0a0a]"
-            style={{ fontFamily: "ui-monospace, SFMono-Regular, monospace" }}
+            className="whitespace-pre-wrap break-words text-[#0f172a] overflow-x-auto"
+            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" }}
           >
             {input === undefined ? "" : JSON.stringify(input, null, 2)}
           </pre>
           {(isOutputAvailable || isOutputError) && (
             <>
-              <span className="text-[#717182]">
+              <span className="text-[#64748b] font-medium uppercase tracking-wider text-[9px] mt-0.5">
                 {isOutputError ? "Error" : "Output"}
               </span>
               <pre
-                className="whitespace-pre-wrap break-words text-[#0a0a0a]"
+                className="whitespace-pre-wrap break-words text-[#0f172a] overflow-x-auto max-h-[300px] overflow-y-auto"
                 style={{
-                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
                 }}
               >
                 {isOutputError

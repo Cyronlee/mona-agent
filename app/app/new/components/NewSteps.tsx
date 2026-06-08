@@ -24,7 +24,7 @@ export function IdeaStep({
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
-      <div className="relative flex flex-1 flex-col items-center px-6 py-10">
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-10">
         <div className="flex flex-col items-start" style={{ width: 800, gap: 80 }}>
           <div className="flex w-full flex-col items-center gap-2">
             <div style={{ transform: "scaleY(-1) rotate(180deg)" }}>

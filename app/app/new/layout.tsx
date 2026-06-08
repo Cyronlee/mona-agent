@@ -7,7 +7,7 @@ const sharedShellStyle = {
   backgroundRepeat: "repeat",
   boxShadow: "0px 1px 3px 0px rgba(0,0,0,0.1), 0px 1px 2px -1px rgba(0,0,0,0.1)",
   border: "1px solid rgba(0,0,0,0.08)",
-  minHeight: 812,
+  minHeight: "100vh",
 } satisfies React.CSSProperties
 
 export default function NewLayout({
