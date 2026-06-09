@@ -33,6 +33,7 @@ export function Dashboard({
   );
   const [features, setFeatures] = useState<FeatureSummary[]>([]);
   const [suggestions, setSuggestions] = useState<AggregatedSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,12 +44,17 @@ export function Dashboard({
         setFeatures(detail.features);
       })
       .catch(console.error);
+    setSuggestionsLoading(true);
     getAllSuggestions(projectSlug)
       .then((data) => {
         if (cancelled) return;
         setSuggestions(data);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => {
+        if (cancelled) return;
+        setSuggestionsLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -76,7 +82,9 @@ export function Dashboard({
       >
         <InboxPanel
           collapsed={inboxCollapsed}
-          suggestions={suggestions.length > 0 ? suggestions : undefined}
+          projectSlug={projectSlug}
+          suggestions={suggestions}
+          suggestionsLoading={suggestionsLoading}
         />
         <main
           className="flex flex-1 overflow-hidden"

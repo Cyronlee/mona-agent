@@ -27,6 +27,7 @@ import {
     StoryFrontmatterSchema,
     StoryFrontmatter,
     SuggestionFrontmatterSchema,
+    SuggestionFrontmatter,
 } from "./types"
 
 // ── Content root ──────────────────────────────────────────────────────────────
@@ -525,6 +526,54 @@ export function getSuggestionDocument(
     const fm = SuggestionFrontmatterSchema.safeParse(parsed.data)
     if (!fm.success) throw new ContentError(`Invalid frontmatter for suggestion "${suggestionSlug}"`, 422)
     return { slug: suggestionSlug, ...fm.data, content: parsed.content.trim() }
+}
+
+export type SuggestionFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    source: string | null
+    impact: "low" | "medium" | "high" | null
+    relatedStorySlugs: string[] | null
+}>
+
+export function updateSuggestionFrontmatter(
+    projectSlug: string,
+    featureSlug: string,
+    suggestionSlug: string,
+    patch: SuggestionFrontmatterPatch,
+): SuggestionDocument {
+    requireFeatureMeta(projectSlug, featureSlug)
+    const file = path.join(
+        getProjectsRoot(),
+        projectSlug,
+        "features",
+        featureSlug,
+        "suggestions",
+        `${suggestionSlug}.md`,
+    )
+    const parsed = safeReadMd(file)
+    if (!parsed) throw new ContentError(`Suggestion "${suggestionSlug}" not found in feature "${featureSlug}"`)
+    const fm = SuggestionFrontmatterSchema.safeParse(parsed.data)
+    if (!fm.success) throw new ContentError(`Invalid frontmatter for suggestion "${suggestionSlug}"`, 422)
+
+    const next: Record<string, unknown> = { ...fm.data }
+    if (patch.title !== undefined) next.title = patch.title
+    if (patch.desc !== undefined) next.desc = patch.desc ?? undefined
+    if (patch.status !== undefined) next.status = patch.status ?? undefined
+    if (patch.source !== undefined) next.source = patch.source ?? undefined
+    if (patch.impact !== undefined) next.impact = patch.impact ?? undefined
+    if (patch.relatedStorySlugs !== undefined) next.relatedStorySlugs = patch.relatedStorySlugs ?? undefined
+    if (Object.keys(next).length === 0) throw new ContentError("patch is empty", 422)
+
+    const validated = SuggestionFrontmatterSchema.safeParse(next)
+    if (!validated.success) throw new ContentError(`Invalid patched frontmatter: ${validated.error.message}`, 422)
+
+    next.updatedAt = new Date().toISOString().slice(0, 10)
+    const doc = matter.stringify(parsed.content, next)
+    fs.writeFileSync(file, doc)
+
+    return { slug: suggestionSlug, ...(validated.data as SuggestionFrontmatter), content: parsed.content.trim() }
 }
 
 export function getAllProjectSuggestions(projectSlug: string): AggregatedSuggestion[] {

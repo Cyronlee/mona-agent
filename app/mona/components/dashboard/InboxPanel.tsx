@@ -1,17 +1,26 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useCallback, useRef } from "react";
 import { Icon } from "@iconify/react";
+import { updateSuggestionFrontmatter } from "../../api/projects";
+import { DocumentDialog } from "../markdown/DocumentDialog";
 import type { AggregatedSuggestion } from "../../api/projects";
 
 type Suggestion = {
   id: number;
+  slug: string;
+  featureSlug: string;
   tag: string;
   title: string;
   action: string;
+  status?: string;
 };
 
 const FALLBACK_SUGGESTIONS: Suggestion[] = [
   {
     id: 0,
+    slug: "replace-nps-prompt",
+    featureSlug: "sign-up",
     tag: "Sign Up",
     title:
       "Henry Howarth suggest to replace the old NPS prompt with the new 1–5 rating.",
@@ -19,6 +28,8 @@ const FALLBACK_SUGGESTIONS: Suggestion[] = [
   },
   {
     id: 1,
+    slug: "add-global-search",
+    featureSlug: "nps-prompt",
     tag: "NPS prompt",
     title:
       "Henry Howarth suggest to help user to find the item more quickly.",
@@ -30,13 +41,15 @@ const MONA_NOTE = "Add a global search function, and a global filter.";
 
 const TONE_OPTIONS = ["Neutral", "Friendly", "Playful"];
 
-function toSuggestions(api?: AggregatedSuggestion[]): Suggestion[] {
-  if (!api) return FALLBACK_SUGGESTIONS;
+function toSuggestions(api: AggregatedSuggestion[]): Suggestion[] {
   return api.map((s, i) => ({
     id: i,
+    slug: s.slug,
+    featureSlug: s.featureSlug,
     tag: s.featureTitle,
     title: s.desc ?? s.title,
     action: s.title,
+    status: s.status,
   }));
 }
 
@@ -44,26 +57,39 @@ function SuggestionCard({
   suggestion,
   dismissed,
   onDismiss,
+  onYes,
+  onBlocked,
+  onPreview,
+  yesLoading,
+  blockedLoading,
 }: {
   suggestion: Suggestion;
   dismissed: boolean;
   onDismiss: () => void;
+  onYes: () => void;
+  onBlocked: () => void;
+  onPreview: () => void;
+  yesLoading: boolean;
+  blockedLoading: boolean;
 }) {
   if (dismissed) return null;
+  const resolved = suggestion.status === "accepted" || suggestion.status === "blocked";
+
   return (
     <div
-      className="mx-3 mb-2 p-3 rounded-[12px] flex flex-col gap-2"
+      className="mx-3 mb-2 p-3 rounded-[12px] flex flex-col gap-2 transition-all duration-200"
       style={{
         background: "#fefdfc",
         border: "1px solid #dbe3ff",
         boxShadow:
           "0px -2px 4px 0px rgba(63,74,78,0.15), 0px -1px 3px 0px rgba(128,142,148,0.2)",
+        opacity: resolved ? 0.6 : 1,
       }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0">
           <span
-            className="px-2 py-0.5 rounded-[8px] text-[12px] text-[#002557] cursor-pointer"
+            className="px-2 py-0.5 rounded-[8px] text-[12px] text-[#002557] shrink-0"
             style={{
               background: "white",
               border: "1px solid rgba(0,0,0,0.1)",
@@ -73,17 +99,34 @@ function SuggestionCard({
           >
             {suggestion.tag}
           </span>
+          {resolved && (
+            <span className="text-[11px] text-[#717182] truncate" style={{ fontFamily: "Poppins, sans-serif" }}>
+              {suggestion.status === "accepted" ? "Accepted" : "Blocked"}
+            </span>
+          )}
         </div>
-        <button onClick={onDismiss} className="hover:opacity-70">
+        <button
+          onClick={onDismiss}
+          className="hover:opacity-70 transition-opacity shrink-0"
+          aria-label="Dismiss suggestion"
+        >
           <Icon icon="lucide:x" width={16} height={16} color="#002557" />
         </button>
       </div>
-      <p
-        className="text-[12px] text-[#0a0a0a]"
-        style={{ fontFamily: "Poppins, sans-serif" }}
+
+      <button
+        onClick={onPreview}
+        className="text-left group cursor-pointer"
+        aria-label="Preview suggestion details"
       >
-        {suggestion.title}
-      </p>
+        <p
+          className="text-[12px] text-[#0a0a0a] group-hover:text-[#002557] transition-colors"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          {suggestion.title}
+        </p>
+      </button>
+
       <div className="pt-1" style={{ borderTop: "1px dashed #EBC5A8" }}>
         <p
           className="text-[12px] text-[#717182] mb-1"
@@ -91,39 +134,61 @@ function SuggestionCard({
         >
           You may want me to:
         </p>
-        <p
-          className="text-[12px] text-[#0a0a0a] mb-2"
-          style={{ fontFamily: "Poppins, sans-serif" }}
-        >
-          {suggestion.action}
-        </p>
-        <div className="flex gap-1.5">
-          <button
-            className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white"
-            style={{
-              background: "#002557",
-              height: 28,
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 500,
-            }}
-        >
-          <Icon icon="lucide:check" width={12} height={12} color="#FF7F26" />
-          Yes
-        </button>
         <button
-          className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557]"
-          style={{
-            background: "white",
-            height: 28,
-            border: "1px solid rgba(0,37,87,0.6)",
-            fontFamily: "Poppins, sans-serif",
-            fontWeight: 500,
-          }}
+          onClick={onPreview}
+          className="text-left w-full group cursor-pointer"
+          aria-label="Preview action details"
         >
-          Blocked
+          <p
+            className="text-[12px] text-[#0a0a0a] mb-2 group-hover:text-[#002557] transition-colors"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            {suggestion.action}
+          </p>
         </button>
+
+        {!resolved && (
+          <div className="flex gap-1.5">
+            <button
+              onClick={onYes}
+              disabled={yesLoading}
+              className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: "#002557",
+                height: 28,
+                fontFamily: "Poppins, sans-serif",
+                fontWeight: 500,
+              }}
+            >
+              {yesLoading ? (
+                <Icon icon="lucide:loader-2" width={12} height={12} className="animate-spin" color="#FF7F26" />
+              ) : (
+                <Icon icon="lucide:check" width={12} height={12} color="#FF7F26" />
+              )}
+              Yes
+            </button>
+            <button
+              onClick={onBlocked}
+              disabled={blockedLoading}
+              className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557] transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: "white",
+                height: 28,
+                border: "1px solid rgba(0,37,87,0.6)",
+                fontFamily: "Poppins, sans-serif",
+                fontWeight: 500,
+              }}
+            >
+              {blockedLoading ? (
+                <Icon icon="lucide:loader-2" width={12} height={12} className="animate-spin" color="#002557" />
+              ) : (
+                <Icon icon="lucide:ban" width={12} height={12} color="#002557" />
+              )}
+              Blocked
+            </button>
+          </div>
+        )}
       </div>
-    </div>
     </div>
   );
 }
@@ -239,7 +304,7 @@ function MonkeyAvatar() {
   );
 }
 
-function CollapsedInbox() {
+function CollapsedInbox({ count }: { count: number }) {
   return (
     <div
       className="flex flex-col items-center shrink-0"
@@ -265,17 +330,19 @@ function CollapsedInbox() {
           </div>
         </div>
 
-        <div
-          className="flex items-center justify-center rounded-[8px] px-2"
-          style={{ background: "#eceef2", height: 22, minWidth: 24 }}
-        >
-          <span
-            className="text-[12px] text-[#030213]"
-            style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
+        {count > 0 && (
+          <div
+            className="flex items-center justify-center rounded-[8px] px-2"
+            style={{ background: "#eceef2", height: 22, minWidth: 24 }}
           >
-            9
-          </span>
-        </div>
+            <span
+              className="text-[12px] text-[#030213]"
+              style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
+            >
+              {count}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1" />
@@ -283,14 +350,71 @@ function CollapsedInbox() {
   );
 }
 
+type SuggestionLoading = {
+  yes: boolean;
+  blocked: boolean;
+};
+
 function ExpandedInbox({
-  suggestions,
+  suggestions: rawSuggestions,
+  projectSlug,
+  suggestionsLoading,
 }: {
   suggestions: Suggestion[];
+  projectSlug: string;
+  suggestionsLoading: boolean;
 }) {
-  const [dismissed, setDismissed] = useState<number[]>([]);
-  const dismiss = (id: number) =>
-    setDismissed((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState<Map<number, SuggestionLoading>>(new Map());
+  const [error, setError] = useState<string | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [previewSuggestion, setPreviewSuggestion] = useState<Suggestion | null>(null);
+
+  const showError = useCallback((msg: string) => {
+    setError(msg);
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(null), 3000);
+  }, []);
+
+  const dismiss = useCallback((id: number) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const updateStatus = useCallback(
+    async (suggestion: Suggestion, status: string, loadingKey: "yes" | "blocked") => {
+      const id = suggestion.id;
+      setLoading((prev) => {
+        const next = new Map(prev);
+        next.set(id, { ...(next.get(id) ?? { yes: false, blocked: false }), [loadingKey]: true });
+        return next;
+      });
+
+      try {
+        await updateSuggestionFrontmatter(
+          projectSlug,
+          suggestion.featureSlug,
+          suggestion.slug,
+          { status },
+        );
+        dismiss(id);
+      } catch {
+        showError(`Failed to mark as ${status}`);
+      } finally {
+        setLoading((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [dismiss, showError, projectSlug],
+  );
+
+  const suggestions = rawSuggestions;
 
   return (
     <div
@@ -314,20 +438,30 @@ function ExpandedInbox({
           >
             Inbox
           </span>
-          <span
-            className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]"
-            style={{
-              background: "#eceef2",
-              height: 22,
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 500,
-            }}
-          >
-            9
-          </span>
+          {suggestions.length > 0 && (
+            <span
+              className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]"
+              style={{
+                background: "#eceef2",
+                height: 22,
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 500,
+              }}
+            >
+              {suggestions.length}
+            </span>
+          )}
         </div>
       </div>
 
+      {error && (
+        <div
+          className="mx-3 mt-2 px-3 py-2 rounded-[8px] text-[11px] text-white animate-in fade-in slide-in-from-top-1 duration-200"
+          style={{ background: "#d4183d", fontFamily: "Poppins, sans-serif" }}
+        >
+          {error}
+        </div>
+      )}
 
       <div className="px-4 pt-4 pb-1 shrink-0">
         <div className="flex items-center gap-1.5">
@@ -337,23 +471,62 @@ function ExpandedInbox({
           >
             Suggestions
           </span>
-          <span
-            className="text-[12px] text-[#717182]"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            · 5
-          </span>
+          {suggestions.length > 0 && (
+            <span
+              className="text-[12px] text-[#717182]"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              · {suggestions.length}
+            </span>
+          )}
         </div>
       </div>
 
-      {suggestions.map((s) => (
-        <SuggestionCard
-          key={s.id}
-          suggestion={s}
-          dismissed={dismissed.includes(s.id)}
-          onDismiss={() => dismiss(s.id)}
-        />
-      ))}
+      {suggestionsLoading ? (
+        <div className="flex items-center justify-center gap-2 py-6 text-[12px] text-[#717182]" style={{ fontFamily: "Poppins, sans-serif" }}>
+          <Icon icon="lucide:loader-2" width={12} height={12} className="animate-spin" />
+          Loading…
+        </div>
+      ) : suggestions.length === 0 ? (
+        <div className="px-6 py-6 text-[12px] text-[#717182] text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
+          No suggestions yet
+        </div>
+      ) : (
+        suggestions.map((s) => {
+          const l = loading.get(s.id);
+          return (
+            <SuggestionCard
+              key={s.id}
+              suggestion={s}
+              dismissed={dismissed.has(s.id)}
+              onDismiss={() => {
+                if (s.featureSlug) {
+                  updateStatus(s, "dismissed", "yes");
+                } else {
+                  dismiss(s.id);
+                }
+              }}
+              onYes={() => {
+                if (s.featureSlug) {
+                  updateStatus(s, "accepted", "yes");
+                } else {
+                  dismiss(s.id);
+                }
+              }}
+              onBlocked={() => {
+                if (s.featureSlug) {
+                  updateStatus(s, "blocked", "blocked");
+                } else {
+                  dismiss(s.id);
+                }
+              }}
+              onPreview={() => s.featureSlug ? setPreviewSuggestion(s) : null}
+              yesLoading={l?.yes ?? false}
+              blockedLoading={l?.blocked ?? false}
+            />
+          );
+        })
+      )}
 
       <MonaNoteCard />
 
@@ -378,21 +551,44 @@ function ExpandedInbox({
 
       <div className="flex-1" />
       <MonkeyAvatar />
+
+      {previewSuggestion && (
+        <DocumentDialog
+          kind="suggestion"
+          projectSlug={projectSlug}
+          featureSlug={previewSuggestion.featureSlug}
+          suggestionSlug={previewSuggestion.slug}
+          title={previewSuggestion.action}
+          open
+          onOpenChange={(o) => {
+            if (!o) setPreviewSuggestion(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 type InboxPanelProps = {
   collapsed: boolean;
-  suggestions?: AggregatedSuggestion[];
+  projectSlug: string;
+  suggestions: AggregatedSuggestion[];
+  suggestionsLoading?: boolean;
 };
 
 export function InboxPanel({
   collapsed,
+  projectSlug,
   suggestions,
+  suggestionsLoading = true,
 }: InboxPanelProps) {
-  if (collapsed) return <CollapsedInbox />;
+  if (collapsed) return <CollapsedInbox count={suggestions.length} />;
   return (
-    <ExpandedInbox suggestions={toSuggestions(suggestions)} />
+    <ExpandedInbox
+      key={projectSlug}
+      projectSlug={projectSlug}
+      suggestions={toSuggestions(suggestions)}
+      suggestionsLoading={suggestionsLoading}
+    />
   );
 }

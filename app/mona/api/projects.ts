@@ -258,10 +258,45 @@ export function updateStoryFrontmatterPatch(
     )
 }
 
+export type SuggestionDocument = {
+    slug: string
+    title: string
+    desc?: string
+    status?: string
+    source?: string
+    impact?: "low" | "medium" | "high"
+    relatedStorySlugs?: string[]
+    updatedAt?: string
+    content: string
+}
+
 export function getSuggestionDocument(
     projectSlug: string,
     featureSlug: string,
     suggestionSlug: string,
-): Promise<SuggestionSummary & { content: string }> {
+): Promise<SuggestionDocument> {
     return apiFetch(`/api/projects/${projectSlug}/features/${featureSlug}/suggestions/${suggestionSlug}`)
 }
+
+export type SuggestionFrontmatterPatch = Partial<{
+    title: string
+    desc: string | null
+    status: string | null
+    source: string | null
+    impact: "low" | "medium" | "high" | null
+    relatedStorySlugs: string[] | null
+}>
+
+export function updateSuggestionFrontmatter(
+    projectSlug: string,
+    featureSlug: string,
+    suggestionSlug: string,
+    patch: SuggestionFrontmatterPatch,
+): Promise<SuggestionDocument> {
+    return apiPatch(
+        `/api/projects/${projectSlug}/features/${featureSlug}/suggestions/${suggestionSlug}`,
+        patch,
+    )
+}
+
+

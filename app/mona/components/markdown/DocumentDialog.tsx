@@ -18,14 +18,18 @@ import {
 import {
   getFeatureDetail,
   getStoryDocument,
+  getSuggestionDocument,
   updateFeatureFrontmatter,
   updateStoryFrontmatterPatch,
+  updateSuggestionFrontmatter,
   type FeatureFrontmatterPatch,
   type StoryFrontmatterPatch,
+  type SuggestionFrontmatterPatch,
 } from "../../api/projects";
 import type {
   FeatureDetail,
   StoryDocument,
+  SuggestionDocument,
 } from "../../api/projects";
 
 export type DocumentDialogProps =
@@ -47,9 +51,19 @@ export type DocumentDialogProps =
       open: boolean;
       onOpenChange: (open: boolean) => void;
       onUpdated?: (data: StoryDocument) => void;
+    }
+  | {
+      kind: "suggestion";
+      projectSlug: string;
+      featureSlug: string;
+      suggestionSlug: string;
+      title: string;
+      open: boolean;
+      onOpenChange: (open: boolean) => void;
+      onUpdated?: (data: SuggestionDocument) => void;
     };
 
-const cache = new Map<string, FeatureDetail | StoryDocument>();
+const cache = new Map<string, FeatureDetail | StoryDocument | SuggestionDocument>();
 
 function FeatureDocumentBody({
   projectSlug,
@@ -219,6 +233,91 @@ function StoryDocumentBody({
   );
 }
 
+function SuggestionDocumentBody({
+  projectSlug,
+  featureSlug,
+  suggestionSlug,
+  onUpdated,
+}: {
+  projectSlug: string;
+  featureSlug: string;
+  suggestionSlug: string;
+  onUpdated?: (data: SuggestionDocument) => void;
+}) {
+  const key = `suggestion:${projectSlug}:${featureSlug}:${suggestionSlug}`;
+  const [data, setData] = useState<SuggestionDocument | null>(
+    () => (cache.get(key) as SuggestionDocument | undefined) ?? null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (data) return;
+    let cancelled = false;
+    getSuggestionDocument(projectSlug, featureSlug, suggestionSlug)
+      .then((d) => {
+        if (cancelled) return;
+        cache.set(key, d);
+        setData(d);
+        onUpdated?.(d);
+      })
+      .catch((e: Error) => {
+        if (cancelled) return;
+        setError(e.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [key, projectSlug, featureSlug, suggestionSlug, data, onUpdated]);
+
+  if (error) return <ErrorState message={error} />;
+  if (!data) return <LoadingState />;
+
+  const handleChange = (change: FrontmatterChange) => {
+    setSaving(true);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[change.key];
+      return next;
+    });
+    const patch: SuggestionFrontmatterPatch = {
+      [change.key]: change.value as never,
+    };
+    updateSuggestionFrontmatter(projectSlug, featureSlug, suggestionSlug, patch)
+      .then((d) => {
+        cache.set(`suggestion:${projectSlug}:${featureSlug}:${suggestionSlug}`, d);
+        setData(d);
+        setSaving(false);
+        onUpdated?.(d);
+      })
+      .catch((e: Error) => {
+        setSaving(false);
+        setFieldErrors((prev) => ({ ...prev, [change.key]: e.message }));
+      });
+  };
+
+  const frontmatter: Record<string, FrontmatterValue> = {
+    desc: data.desc,
+    status: data.status,
+    source: data.source,
+    impact: data.impact,
+    relatedStorySlugs: data.relatedStorySlugs,
+  };
+
+  return (
+    <>
+      <DocumentContent markdown={data.content} />
+      <DocumentSidePanel
+        fields={frontmatter}
+        onChange={handleChange}
+        saving={saving}
+        errors={fieldErrors}
+      />
+    </>
+  );
+}
+
 function DocumentContent({ markdown }: { markdown: string | null }) {
   if (!markdown) {
     return (
@@ -272,6 +371,14 @@ export function DocumentDialog(props: DocumentDialogProps) {
               key={`feature:${props.projectSlug}:${props.featureSlug}`}
               projectSlug={props.projectSlug}
               featureSlug={props.featureSlug}
+              onUpdated={props.onUpdated}
+            />
+          ) : props.kind === "suggestion" ? (
+            <SuggestionDocumentBody
+              key={`suggestion:${props.projectSlug}:${props.featureSlug}:${props.suggestionSlug}`}
+              projectSlug={props.projectSlug}
+              featureSlug={props.featureSlug}
+              suggestionSlug={props.suggestionSlug}
               onUpdated={props.onUpdated}
             />
           ) : (
