@@ -5,6 +5,7 @@ type Options = {
   max: number;
   default: number;
   storageKey: string;
+  side?: "left" | "right";
 };
 
 function readInitialWidth(opts: Options): number {
@@ -49,7 +50,8 @@ export function useResizableWidth(opts: Options) {
 
       const onMouseMove = (moveEvent: MouseEvent) => {
         if (!dragging.current) return;
-        const delta = startX.current - moveEvent.clientX;
+        const rawDelta = moveEvent.clientX - startX.current;
+        const delta = opts.side === "right" ? rawDelta : -rawDelta;
         const nextWidth = Math.min(
           opts.max,
           Math.max(opts.min, startWidth.current + delta),
@@ -66,7 +68,7 @@ export function useResizableWidth(opts: Options) {
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mouseup", onMouseUp);
     },
-    [opts.max, opts.min, width],
+    [opts.max, opts.min, opts.side, width],
   );
 
   return { width, onMouseDown };

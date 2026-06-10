@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAllSuggestions, getProjectDetail } from "../../api/projects";
 import type {
   AggregatedSuggestion,
@@ -8,9 +8,8 @@ import type {
   ProjectSummary,
 } from "../../api/projects";
 import { BottomBar } from "./BottomBar";
-import { InboxPanel } from "./InboxPanel";
+import { LeftPanel } from "./LeftPanel";
 import { ProjectWorkspaceContent } from "./ProjectWorkspaceContent";
-import { RightPanel } from "./RightPanel";
 import { TopBar } from "./TopBar";
 
 type DashboardProps = {
@@ -26,14 +25,17 @@ export function Dashboard({
   onSelectProject,
   onCreateNew,
 }: DashboardProps) {
-  const [inboxCollapsed, setInboxCollapsed] = useState(false);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [projectTitle, setProjectTitle] = useState(
     projects.find((p) => p.slug === projectSlug)?.title ?? projectSlug,
   );
   const [features, setFeatures] = useState<FeatureSummary[]>([]);
   const [suggestions, setSuggestions] = useState<AggregatedSuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+  const [suggestionsRefreshKey, setSuggestionsRefreshKey] = useState(0);
+
+  const refreshSuggestions = useCallback(() => {
+    setSuggestionsRefreshKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +60,7 @@ export function Dashboard({
     return () => {
       cancelled = true;
     };
-  }, [projectSlug]);
+  }, [projectSlug, suggestionsRefreshKey]);
 
   return (
     <div
@@ -66,10 +68,6 @@ export function Dashboard({
       style={{ background: "#ffffff", minHeight: 0 }}
     >
       <TopBar
-        inboxCollapsed={inboxCollapsed}
-        rightPanelOpen={rightPanelOpen}
-        onToggleInbox={() => setInboxCollapsed((v) => !v)}
-        onToggleRightPanel={() => setRightPanelOpen((v) => !v)}
         projectTitle={projectTitle}
         projects={projects}
         currentProjectSlug={projectSlug}
@@ -80,11 +78,11 @@ export function Dashboard({
         className="flex flex-1 overflow-hidden"
         style={{ marginTop: 48, marginBottom: 28 }}
       >
-        <InboxPanel
-          collapsed={inboxCollapsed}
+        <LeftPanel
           projectSlug={projectSlug}
           suggestions={suggestions}
           suggestionsLoading={suggestionsLoading}
+          onInboxExpand={refreshSuggestions}
         />
         <main
           className="flex flex-1 overflow-hidden"
@@ -95,11 +93,6 @@ export function Dashboard({
             projectSlug={projectSlug}
           />
         </main>
-        {rightPanelOpen && (
-          <RightPanel
-            projectSlug={projectSlug}
-          />
-        )}
       </div>
       <BottomBar />
     </div>

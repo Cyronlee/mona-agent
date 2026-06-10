@@ -3,7 +3,6 @@ import { Icon } from "@iconify/react";
 import {
   BellIcon,
   HelpIcon,
-  PanelToggleIcon,
   SearchIcon,
 } from "./dashboardIcons";
 import type { ProjectSummary } from "../../api/projects";
@@ -11,10 +10,6 @@ import type { ProjectSummary } from "../../api/projects";
 const imgLogo = "/mona/logo.png";
 
 type TopBarProps = {
-  inboxCollapsed: boolean;
-  rightPanelOpen: boolean;
-  onToggleInbox: () => void;
-  onToggleRightPanel: () => void;
   projectTitle: string;
   projects: ProjectSummary[];
   currentProjectSlug: string;
@@ -27,10 +22,6 @@ const ROW_HEIGHT = 36;
 const LIST_MAX_HEIGHT = 320;
 
 export function TopBar({
-  inboxCollapsed,
-  rightPanelOpen,
-  onToggleInbox,
-  onToggleRightPanel,
   projectTitle,
   projects,
   currentProjectSlug,
@@ -70,19 +61,6 @@ export function TopBar({
         background: "white",
       }}
     >
-      <button
-        onClick={onToggleInbox}
-        className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 transition-colors"
-        style={{
-          width: 28,
-          height: 28,
-          border: "1px solid rgba(0,0,0,0.08)",
-        }}
-        aria-label={inboxCollapsed ? "Expand inbox" : "Collapse inbox"}
-      >
-        <PanelToggleIcon side="left" open={!inboxCollapsed} />
-      </button>
-
       <div
         className="flex items-center px-2 shrink-0"
         style={{
@@ -273,18 +251,6 @@ export function TopBar({
           aria-label="Settings"
         >
           <Icon icon="lucide:settings" width={14} height={14} color="#717182" />
-        </button>
-        <button
-          onClick={onToggleRightPanel}
-          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 transition-colors"
-          style={{
-            width: 28,
-            height: 28,
-            border: "1px solid rgba(0,0,0,0.08)",
-          }}
-          aria-label={rightPanelOpen ? "Collapse AI panel" : "Expand AI panel"}
-        >
-          <PanelToggleIcon side="right" open={rightPanelOpen} />
         </button>
       </div>
     </header>

@@ -304,48 +304,53 @@ function MonkeyAvatar() {
   );
 }
 
-function CollapsedInbox({ count }: { count: number }) {
+function CollapsedInbox({
+  count,
+  onToggle,
+}: {
+  count: number;
+  onToggle: () => void;
+}) {
   return (
     <div
-      className="flex flex-col items-center shrink-0"
+      className="flex items-center shrink-0 px-4"
       style={{
-        width: 41,
+        height: 40,
         background: "#dfe3e8",
-        borderRight: "1px solid rgba(0,0,0,0.1)",
-        boxShadow: "2px 0px 4px 0px rgba(0,0,0,0.15)",
-        height: "100%",
+        borderBottom: "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      <div className="flex flex-col gap-2 items-center pt-2 px-2">
+      <div className="flex items-center gap-1">
         <Icon icon="lucide:inbox" width={16} height={16} color="#1C1B1F" />
-
-        <div className="flex items-center justify-center h-[37px] w-[17px]">
-          <div className="-rotate-90 flex-none">
-            <p
-              className="text-[14px] text-[#0a0a0a] whitespace-nowrap"
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              Inbox
-            </p>
-          </div>
-        </div>
-
+        <span
+          className="text-[14px] text-[#0a0a0a]"
+          style={{ fontFamily: "Inter, sans-serif" }}
+        >
+          Inbox
+        </span>
         {count > 0 && (
-          <div
-            className="flex items-center justify-center rounded-[8px] px-2"
-            style={{ background: "#eceef2", height: 22, minWidth: 24 }}
+          <span
+            className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]"
+            style={{
+              background: "#eceef2",
+              height: 22,
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 500,
+            }}
           >
-            <span
-              className="text-[12px] text-[#030213]"
-              style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
-            >
-              {count}
-            </span>
-          </div>
+            {count}
+          </span>
         )}
       </div>
-
       <div className="flex-1" />
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+        style={{ width: 24, height: 24 }}
+        aria-label="Expand inbox"
+      >
+        <Icon icon="lucide:chevron-down" width={16} height={16} color="#1C1B1F" />
+      </button>
     </div>
   );
 }
@@ -359,10 +364,12 @@ function ExpandedInbox({
   suggestions: rawSuggestions,
   projectSlug,
   suggestionsLoading,
+  onToggle,
 }: {
   suggestions: Suggestion[];
   projectSlug: string;
   suggestionsLoading: boolean;
+  onToggle: () => void;
 }) {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState<Map<number, SuggestionLoading>>(new Map());
@@ -420,9 +427,7 @@ function ExpandedInbox({
     <div
       className="flex h-full flex-col shrink-0 overflow-y-auto"
       style={{
-        width: 220,
         background: "#dfe3e8",
-        borderRight: "1px solid rgba(0,0,0,0.1)",
         height: "100%",
       }}
     >
@@ -452,6 +457,14 @@ function ExpandedInbox({
             </span>
           )}
         </div>
+        <button
+          onClick={onToggle}
+          className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+          style={{ width: 24, height: 24 }}
+          aria-label="Collapse inbox"
+        >
+          <Icon icon="lucide:chevron-up" width={16} height={16} color="#1C1B1F" />
+        </button>
       </div>
 
       {error && (
@@ -571,6 +584,7 @@ function ExpandedInbox({
 
 type InboxPanelProps = {
   collapsed: boolean;
+  onToggle: () => void;
   projectSlug: string;
   suggestions: AggregatedSuggestion[];
   suggestionsLoading?: boolean;
@@ -578,17 +592,19 @@ type InboxPanelProps = {
 
 export function InboxPanel({
   collapsed,
+  onToggle,
   projectSlug,
   suggestions,
   suggestionsLoading = true,
 }: InboxPanelProps) {
-  if (collapsed) return <CollapsedInbox count={suggestions.length} />;
+  if (collapsed) return <CollapsedInbox count={suggestions.length} onToggle={onToggle} />;
   return (
     <ExpandedInbox
       key={projectSlug}
       projectSlug={projectSlug}
       suggestions={toSuggestions(suggestions)}
       suggestionsLoading={suggestionsLoading}
+      onToggle={onToggle}
     />
   );
 }

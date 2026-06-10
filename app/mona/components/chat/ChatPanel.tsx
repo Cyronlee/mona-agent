@@ -13,9 +13,12 @@ import {
   type ChatMessage,
   type ChatSession,
 } from "../../api/chat";
+import { MarkdownViewer } from "../markdown/MarkdownViewer";
 
 type ChatPanelProps = {
   projectSlug?: string;
+  collapsed?: boolean;
+  onToggleExpand?: () => void;
 };
 
 type PersistedToolCall = {
@@ -86,7 +89,7 @@ function formatRelativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
+export function ChatPanel({ projectSlug = "acme-feedback", collapsed = false, onToggleExpand }: ChatPanelProps) {
   const chatInstanceId = useId();
   const [input, setInput] = useState("");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -162,13 +165,34 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
 
   const isFirstStatusRef = useRef(true);
   useEffect(() => {
-    // Load sessions on initial mount so the popover is populated before any
-    // message is sent.
+    // Load sessions on initial mount, then auto-select the most recent one
+    // if it exists; otherwise start with a fresh conversation.
     let cancelled = false;
     (async () => {
       try {
         const list = await listSessions(projectSlug);
-        if (!cancelled) setSessions(list);
+        if (cancelled) return;
+        setSessions(list);
+        if (list.length > 0) {
+          const latest = list[0];
+          const requestId = ++loadRequestRef.current;
+          setLoadingSessionId(latest.id);
+          try {
+            const detail = await getSession(projectSlug, latest.id);
+            if (loadRequestRef.current !== requestId) return;
+            setMessages(persistedToUIMessages(detail.messages));
+            setExplicitSessionId(latest.id);
+            setActiveTitle(detail.title);
+          } catch (err) {
+            if (loadRequestRef.current === requestId) {
+              console.error("Failed to load latest session", err);
+            }
+          } finally {
+            if (loadRequestRef.current === requestId) {
+              setLoadingSessionId(null);
+            }
+          }
+        }
       } catch (err) {
         if (!cancelled) console.error("Failed to load sessions on mount", err);
       }
@@ -291,8 +315,64 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
 
   const triggerLabel = activeSessionId ? activeTitle : "Chat with Mona";
 
+  if (collapsed) {
+    return (
+      <div
+        className="flex items-center shrink-0 px-4"
+        style={{
+          height: 40,
+          background: "white",
+        }}
+      >
+        <div className="flex items-center gap-1">
+          <Icon icon="lucide:sparkles" width={16} height={16} color="#717182" />
+          <span
+            className="text-[14px] text-[#0a0a0a]"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Chat
+          </span>
+        </div>
+        <div className="flex-1" />
+        <button
+          onClick={onToggleExpand}
+          className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+          style={{ width: 24, height: 24 }}
+          aria-label="Expand chat"
+        >
+          <Icon icon="lucide:chevron-up" width={16} height={16} color="#1C1B1F" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col">
+      <div
+        className="flex items-center justify-between shrink-0 px-4"
+        style={{
+          height: 40,
+          background: "white",
+        }}
+      >
+        <div className="flex items-center gap-1">
+          <Icon icon="lucide:sparkles" width={16} height={16} color="#717182" />
+          <span
+            className="text-[14px] text-[#0a0a0a]"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Chat
+          </span>
+        </div>
+        <button
+          onClick={onToggleExpand}
+          className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+          style={{ width: 24, height: 24 }}
+          aria-label="Collapse chat"
+        >
+          <Icon icon="lucide:chevron-down" width={16} height={16} color="#1C1B1F" />
+        </button>
+      </div>
       <div
         className="flex items-center justify-between shrink-0 pl-3 pr-2"
         style={{
@@ -427,15 +507,17 @@ export function ChatPanel({ projectSlug = "acme-feedback" }: ChatPanelProps) {
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
-        <button
-          onClick={handleNewSession}
-          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 text-[#717182] hover:text-[#0a0a0a] text-[11px] px-2 h-6 transition-colors"
-          style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
-          title="Start a new conversation"
-        >
-          <Icon icon="lucide:plus" width={12} height={12} className="mr-1" />
-          New
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleNewSession}
+            className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 text-[#717182] hover:text-[#0a0a0a] text-[11px] px-2 h-6 transition-colors"
+            style={{ fontFamily: "Inter, sans-serif", fontWeight: 500 }}
+            title="Start a new conversation"
+          >
+            <Icon icon="lucide:plus" width={12} height={12} className="mr-1" />
+            New
+          </button>
+        </div>
       </div>
 
       <div
@@ -689,32 +771,24 @@ type BubbleMessage = {
 
 function MessageBubble({ message }: { message: BubbleMessage }) {
   const isUser = message.role === "user";
-  return (
-    <div
-      className={`flex flex-col gap-1 ${isUser ? "items-end" : "items-start"}`}
-    >
-      <div
-        className="text-[10px] text-[#717182] uppercase tracking-wide"
-        style={{ fontFamily: "Inter, sans-serif", fontWeight: 600 }}
-      >
-        {isUser ? "You" : "Mona"}
+  if (!isUser) {
+    return (
+      <div className="text-[12px] leading-relaxed">
+        {message.parts.map((part, i) => (
+          <MessagePart key={i} part={part} isAssistant />
+        ))}
       </div>
+    );
+  }
+  return (
+    <div className="flex items-end self-end">
       <div
-        className="max-w-full rounded-[12px] px-3 py-2 text-[12px] leading-relaxed"
-        style={
-          isUser
-            ? {
-              background: "#1e2340",
-              color: "white",
-              fontFamily: "Inter, sans-serif",
-            }
-            : {
-              background: "white",
-              border: "1px solid rgba(0,0,0,0.06)",
-              color: "#0a0a0a",
-              fontFamily: "Inter, sans-serif",
-            }
-        }
+        className="rounded-[12px] px-3 py-2 text-[12px] leading-relaxed"
+        style={{
+          background: "#1e2340",
+          color: "white",
+          fontFamily: "Inter, sans-serif",
+        }}
       >
         {message.parts.map((part, i) => (
           <MessagePart key={i} part={part} />
@@ -724,19 +798,22 @@ function MessageBubble({ message }: { message: BubbleMessage }) {
   );
 }
 
-function MessagePart({ part }: { part: Record<string, unknown> }) {
+function MessagePart({ part, isAssistant }: { part: Record<string, unknown>; isAssistant?: boolean }) {
   const type = part.type as string;
 
   if (type === "text") {
     const text = (part.text as string | undefined) ?? "";
     if (!text) return null;
+    if (isAssistant) {
+      return <MarkdownViewer markdown={text} />;
+    }
     return <span className="whitespace-pre-wrap break-words">{text}</span>;
   }
 
   if (type === "reasoning") {
     const text = (part.text as string | undefined) ?? "";
     return (
-      <details className="mt-2 text-[11px] rounded-[8px] bg-white border border-[#e2e8f0] shadow-sm transition-all group overflow-hidden">
+      <details className="mt-2 w-fit text-[11px] rounded-[8px] bg-white border border-[#e2e8f0] shadow-sm transition-all group overflow-hidden">
         <summary className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-[#475569] hover:bg-slate-50 transition-colors list-none select-none outline-none [&::-webkit-details-marker]:hidden">
           <Icon icon="lucide:brain-circuit" width={12} height={12} className="text-[#8b5cf6]" />
           <span className="font-medium text-[10px] text-[#0f172a]">Reasoning</span>
@@ -773,7 +850,7 @@ function MessagePart({ part }: { part: Record<string, unknown> }) {
     const isOutputError = state === "output-error";
     return (
       <details
-        className="mt-2 text-[11px] rounded-[8px] overflow-hidden bg-white border border-[#e2e8f0] shadow-sm transition-all group"
+        className="mt-2 w-fit text-[11px] rounded-[8px] overflow-hidden bg-white border border-[#e2e8f0] shadow-sm transition-all group"
         style={{ fontFamily: "Inter, sans-serif" }}
       >
         <summary className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-[#475569] hover:bg-slate-50 transition-colors list-none select-none outline-none [&::-webkit-details-marker]:hidden">
