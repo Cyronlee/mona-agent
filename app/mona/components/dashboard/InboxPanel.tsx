@@ -291,19 +291,6 @@ function QuestionCard() {
   );
 }
 
-function MonkeyAvatar() {
-  return (
-    <div className="p-3">
-      <div
-        className="flex items-center justify-center rounded-full cursor-pointer hover:opacity-90"
-        style={{ width: 36, height: 36, background: "#002557" }}
-      >
-        <Icon icon="lucide:bot" width={20} height={20} color="#FF7F26" />
-      </div>
-    </div>
-  );
-}
-
 function CollapsedInbox({
   count,
   onToggle,
@@ -561,9 +548,6 @@ function ExpandedInbox({
       </div>
 
       <QuestionCard />
-
-      <div className="flex-1" />
-      <MonkeyAvatar />
 
       {previewSuggestion && (
         <DocumentDialog
