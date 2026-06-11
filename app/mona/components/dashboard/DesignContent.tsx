@@ -6,14 +6,22 @@ import { CodeWorkspace } from "./CodeWorkspace";
 const DESIGN_TABS = ["Prototype", "Design System", "Code"];
 
 function DesignSystemPanel() {
+  const HEADER_HEIGHT = 56;
+
   return (
-    <div className="flex flex-col flex-1 p-8 bg-[#feffff] overflow-y-auto items-center justify-center">
-      <span
-        className="text-[14px] text-[#717182]"
-        style={{ fontFamily: "Poppins, sans-serif" }}
-      >
-        Design System (Coming soon)
-      </span>
+    <div className="relative flex-1 min-h-0 overflow-hidden">
+      <iframe
+        src="https://ui.shadcn.com/create"
+        className="w-full border-0"
+        title="shadcn/ui Design System"
+        style={{
+          margin: 0,
+          padding: 0,
+          border: "none",
+          height: `calc(100% + ${HEADER_HEIGHT}px)`,
+          transform: `translateY(-${HEADER_HEIGHT}px)`,
+        }}
+      />
     </div>
   );
 }

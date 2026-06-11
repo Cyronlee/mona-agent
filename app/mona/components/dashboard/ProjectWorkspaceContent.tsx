@@ -59,11 +59,11 @@ export function ProjectWorkspaceContent({
                     <PrdTabContent projectSlug={projectSlug} />
                 ) : activeTab === "Product" ? (
                     <div
-                        className="flex flex-1 overflow-hidden"
+                        className="flex flex-1 min-h-0 overflow-hidden"
                         style={{ background: "#f6f6f9", gap: 0 }}
                     >
                         <div
-                            className="flex-shrink-0 overflow-hidden"
+                            className="flex flex-col flex-shrink-0 min-h-0 overflow-hidden"
                             style={{ width: leftPanelWidth, padding: 16 }}
                         >
                             <FeatureListPanel
@@ -73,7 +73,7 @@ export function ProjectWorkspaceContent({
                         </div>
                         <ResizableHandle onMouseDown={onMouseDown} />
                         <div
-                            className="flex-1 min-w-0 overflow-hidden"
+                            className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden"
                             style={{ padding: 16 }}
                         >
                             <DesignContent projectSlug={projectSlug} />
