@@ -1,0 +1,9 @@
+[project]
+name = "atlassian-toolkit-cli"
+version = "0.1.0"
+description = "Thin CLI wrapper around atlassian-python-api for the atlassian-toolkit skill."
+requires-python = ">=3.10"
+dependencies = [
+    "atlassian-python-api>=3.41,<4",
+    "markdownify>=0.11,<1",
+]

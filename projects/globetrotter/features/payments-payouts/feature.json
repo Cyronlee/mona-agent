@@ -1,0 +1,8 @@
+{
+  "slug": "payments-payouts",
+  "title": "Payments & Payouts",
+  "desc": "Manages secure and transparent financial transactions, including Shopper payments, escrow, and Local payouts.",
+  "status": "planned",
+  "order": 4,
+  "updatedAt": "2026-06-11"
+}

@@ -5,6 +5,9 @@ import { ContentError, createProject, listProjects } from "@/lib/projects/loader
 const CreateProjectSchema = z.object({
     title: z.string().min(1).max(120),
     desc: z.string().max(500).optional(),
+    domain: z.string().max(120).optional(),
+    buildIdea: z.string().max(1000).optional(),
+    details: z.string().max(2000).optional(),
 })
 
 export async function GET() {

@@ -40,6 +40,7 @@ function ResizeHandle({
 
 type LeftPanelProps = {
   projectSlug: string;
+  autoPrompt?: string | null;
   suggestions: AggregatedSuggestion[];
   suggestionsLoading?: boolean;
   onInboxExpand?: () => void;
@@ -47,6 +48,7 @@ type LeftPanelProps = {
 
 export function LeftPanel({
   projectSlug,
+  autoPrompt,
   suggestions,
   suggestionsLoading,
   onInboxExpand,
@@ -108,6 +110,7 @@ export function LeftPanel({
           collapsed={expanded !== "chat"}
           onToggleExpand={toggle}
           projectSlug={projectSlug}
+          autoPrompt={autoPrompt}
         />
       </div>
 

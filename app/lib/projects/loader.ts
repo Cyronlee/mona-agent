@@ -156,6 +156,11 @@ function buildFeatureSummary(projectSlug: string, featureSlug: string): FeatureS
         .filter((s): s is StorySummary => s !== null)
         .sort((a, b) => (a.order ?? 99) - (b.order ?? 99))
 
+    const indexDoc = safeReadMd(path.join(featureDir, "index.md"))
+    const indexFm = indexDoc ? FeatureIndexFrontmatterSchema.safeParse(indexDoc.data) : null
+    const jiraKey = indexFm?.success ? indexFm.data.jiraKey : undefined
+    const jiraSyncedAt = indexFm?.success ? indexFm.data.jiraSyncedAt : undefined
+
     return {
         slug: fm.slug,
         title: fm.title,
@@ -164,6 +169,8 @@ function buildFeatureSummary(projectSlug: string, featureSlug: string): FeatureS
         order: fm.order,
         storyCount: storySlugs.length,
         suggestionCount: listMdSlugs(path.join(featureDir, "suggestions")).length,
+        jiraKey,
+        jiraSyncedAt,
         stories,
     }
 }
@@ -205,7 +212,13 @@ export function listProjects(): ProjectSummary[] {
     return results
 }
 
-export function createProject(input: { title: string; desc?: string }): ProjectSummary {
+export function createProject(input: {
+    title: string
+    desc?: string
+    domain?: string
+    buildIdea?: string
+    details?: string
+}): ProjectSummary {
     const title = (input.title ?? "").trim()
     if (!title) throw new ContentError("title is required", 422)
     if (title.length > 120) throw new ContentError("title too long (max 120 chars)", 422)
@@ -224,6 +237,9 @@ export function createProject(input: { title: string; desc?: string }): ProjectS
     const featuresDir = path.join(projectDir, "features")
     const now = new Date().toISOString().slice(0, 10)
     const desc = (input.desc ?? "").trim() || `${title} project workspace.`
+    const domain = (input.domain ?? "").trim() || "Other"
+    const buildIdea = (input.buildIdea ?? "").trim() || title
+    const details = (input.details ?? "").trim()
 
     fs.mkdirSync(codeDir, { recursive: true })
     fs.mkdirSync(featuresDir, { recursive: true })
@@ -239,6 +255,13 @@ export function createProject(input: { title: string; desc?: string }): ProjectS
     fs.writeFileSync(path.join(projectDir, "project.json"), JSON.stringify(meta, null, 4))
 
     const prdBody = [
+        "## Project Intake",
+        "",
+        `- Project Name: ${title}`,
+        `- What are we going to build: ${buildIdea}`,
+        `- Domain: ${domain}`,
+        `- I want to explain the project more: ${details || "(Not provided)"}`,
+        "",
         "## Overview",
         "",
         desc,
@@ -434,6 +457,8 @@ export type FeatureFrontmatterPatch = Partial<{
     desc: string | null
     status: string | null
     goals: string[] | null
+    jiraKey: string | null
+    jiraSyncedAt: string | null
 }>
 
 export function updateFeatureIndexFrontmatter(
@@ -453,6 +478,8 @@ export function updateFeatureIndexFrontmatter(
     if (patch.desc !== undefined) next.desc = patch.desc ?? undefined
     if (patch.status !== undefined) next.status = patch.status ?? undefined
     if (patch.goals !== undefined) next.goals = patch.goals ?? undefined
+    if (patch.jiraKey !== undefined) next.jiraKey = patch.jiraKey ?? undefined
+    if (patch.jiraSyncedAt !== undefined) next.jiraSyncedAt = patch.jiraSyncedAt ?? undefined
     if (Object.keys(next).length === 0) throw new ContentError("patch is empty", 422)
 
     const validated = FeatureIndexFrontmatterSchema.safeParse(next)

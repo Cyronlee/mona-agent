@@ -1,0 +1,8 @@
+{
+  "slug": "user-onboarding-profiles",
+  "title": "User Onboarding & Profiles",
+  "desc": "Allows users to create accounts, set up their profiles as Shoppers or Locals, and manage personal information.",
+  "status": "planned",
+  "order": 1,
+  "updatedAt": "2026-06-11"
+}

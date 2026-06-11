@@ -20,6 +20,8 @@ export type FeatureSummary = {
     order: number
     storyCount: number
     suggestionCount: number
+    jiraKey?: string
+    jiraSyncedAt?: string
     stories: StorySummary[]
 }
 
@@ -159,7 +161,13 @@ export function listProjects(): Promise<ProjectSummary[]> {
     return apiFetch("/api/projects")
 }
 
-export function createProject(input: { title: string; desc?: string }): Promise<ProjectSummary> {
+export function createProject(input: {
+    title: string
+    desc?: string
+    domain?: string
+    buildIdea?: string
+    details?: string
+}): Promise<ProjectSummary> {
     return apiPost("/api/projects", input)
 }
 
@@ -227,6 +235,8 @@ export type FeatureFrontmatterPatch = Partial<{
     desc: string | null
     status: string | null
     goals: string[] | null
+    jiraKey: string | null
+    jiraSyncedAt: string | null
 }>
 
 export function updateFeatureFrontmatter(
@@ -297,6 +307,18 @@ export function updateSuggestionFrontmatter(
         `/api/projects/${projectSlug}/features/${featureSlug}/suggestions/${suggestionSlug}`,
         patch,
     )
+}
+
+export type JiraSyncResult = {
+    feature: FeatureDetail
+    jira: { key: string; url: string }
+}
+
+export function syncFeatureToJira(
+    projectSlug: string,
+    featureSlug: string,
+): Promise<JiraSyncResult> {
+    return apiPost(`/api/projects/${projectSlug}/features/${featureSlug}/sync-jira`, {})
 }
 
 

@@ -35,9 +35,11 @@ function ResizableHandle({
 export function ProjectWorkspaceContent({
     features: apiFeatures,
     projectSlug,
+    prdRefreshKey = 0,
 }: {
     features?: FeatureSummary[];
     projectSlug: string;
+    prdRefreshKey?: number;
 }) {
     const [activeTab, setActiveTab] = useState<MainTabId>("PRD");
     const { width: leftPanelWidth, onMouseDown } = useResizableWidth({
@@ -56,7 +58,7 @@ export function ProjectWorkspaceContent({
             <MainTabBar activeTab={activeTab} onChange={setActiveTab} />
             <div className="flex flex-1 overflow-hidden">
                 {activeTab === "PRD" ? (
-                    <PrdTabContent projectSlug={projectSlug} />
+                    <PrdTabContent projectSlug={projectSlug} refreshKey={prdRefreshKey} />
                 ) : activeTab === "Product" ? (
                     <div
                         className="flex flex-1 min-h-0 overflow-hidden"

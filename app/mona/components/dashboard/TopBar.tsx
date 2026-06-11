@@ -15,6 +15,8 @@ type TopBarProps = {
   currentProjectSlug: string;
   onSelectProject: (slug: string) => void;
   onCreateNew: () => void;
+  onRefresh: () => void;
+  refreshing?: boolean;
 };
 
 const DROPDOWN_MIN_WIDTH = 280;
@@ -27,6 +29,8 @@ export function TopBar({
   currentProjectSlug,
   onSelectProject,
   onCreateNew,
+  onRefresh,
+  refreshing = false,
 }: TopBarProps) {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const projectMenuRef = useRef<HTMLDivElement | null>(null);
@@ -224,6 +228,22 @@ export function TopBar({
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="flex items-center justify-center rounded-[8px] hover:bg-gray-50 disabled:opacity-50"
+          style={{ width: 28, height: 28 }}
+          aria-label="Refresh"
+          title="Refresh PRD, Inbox, and main content"
+        >
+          <Icon
+            icon={refreshing ? "lucide:loader-circle" : "lucide:refresh-cw"}
+            width={14}
+            height={14}
+            color="#717182"
+            className={refreshing ? "animate-spin" : undefined}
+          />
+        </button>
         <button
           className="flex items-center justify-center rounded-[8px] hover:bg-gray-50"
           style={{ width: 28, height: 28 }}

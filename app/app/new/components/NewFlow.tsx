@@ -8,6 +8,7 @@ import { IdeaStep, LoadingStep, SetupStep, type SetupDraft } from "./NewSteps"
 type NewStep = "idea" | "setup" | "loading"
 
 const STORAGE_KEY = "mona.currentProjectSlug"
+const AUTO_KICKOFF_KEY_PREFIX = "mona.autoKickoff."
 
 const DEFAULT_SETUP_DRAFT: SetupDraft = {
   projectName: "",
@@ -28,36 +29,40 @@ export function NewFlow() {
 
     let cancelled = false
 
-    ;(async () => {
-      try {
-        const project = await createProject({
-          title: setupDraft.projectName,
-          desc: setupDraft.description || undefined,
-        })
+      ; (async () => {
+        try {
+          const project = await createProject({
+            title: setupDraft.projectName,
+            desc: setupDraft.description || undefined,
+            domain: setupDraft.domain,
+            buildIdea: projectIdea || setupDraft.projectName,
+            details: setupDraft.description || undefined,
+          })
 
-        if (cancelled) return
+          if (cancelled) return
 
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(STORAGE_KEY, project.slug)
-          window.location.replace("/dashboard")
-          return
-        }
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem(STORAGE_KEY, project.slug)
+            window.localStorage.setItem(`${AUTO_KICKOFF_KEY_PREFIX}${project.slug}`, "1")
+            window.location.replace("/dashboard")
+            return
+          }
 
-        router.replace("/dashboard")
-      } catch (error) {
-        if (cancelled) return
+          router.replace("/dashboard")
+        } catch (error) {
+          if (cancelled) return
 
-        const message =
-          error instanceof ApiError
-            ? error.message
-            : error instanceof Error
+          const message =
+            error instanceof ApiError
               ? error.message
-              : "Failed to create project"
+              : error instanceof Error
+                ? error.message
+                : "Failed to create project"
 
-        setDraftError(message)
-        setStep("setup")
-      }
-    })()
+          setDraftError(message)
+          setStep("setup")
+        }
+      })()
 
     return () => {
       cancelled = true

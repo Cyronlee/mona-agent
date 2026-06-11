@@ -19,6 +19,7 @@ type ChatPanelProps = {
   projectSlug?: string;
   collapsed?: boolean;
   onToggleExpand?: () => void;
+  autoPrompt?: string | null;
 };
 
 type PersistedToolCall = {
@@ -89,7 +90,12 @@ function formatRelativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
-export function ChatPanel({ projectSlug = "acme-feedback", collapsed = false, onToggleExpand }: ChatPanelProps) {
+export function ChatPanel({
+  projectSlug = "acme-feedback",
+  collapsed = false,
+  onToggleExpand,
+  autoPrompt = null,
+}: ChatPanelProps) {
   const chatInstanceId = useId();
   const [input, setInput] = useState("");
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -102,7 +108,9 @@ export function ChatPanel({ projectSlug = "acme-feedback", collapsed = false, on
   const [search, setSearch] = useState("");
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const autoPromptSentRef = useRef<Set<string>>(new Set());
 
   // Ref mirror of the active session id. The transport's body resolver
   // (captured in a useMemo below) reads from this ref at request time so
@@ -195,6 +203,8 @@ export function ChatPanel({ projectSlug = "acme-feedback", collapsed = false, on
         }
       } catch (err) {
         if (!cancelled) console.error("Failed to load sessions on mount", err);
+      } finally {
+        if (!cancelled) setSessionsLoaded(true);
       }
     })();
     return () => {
@@ -231,6 +241,30 @@ export function ChatPanel({ projectSlug = "acme-feedback", collapsed = false, on
       cancelled = true;
     };
   }, [isStreaming, projectSlug]);
+
+  useEffect(() => {
+    if (!autoPrompt) return;
+    if (collapsed) return;
+    if (!sessionsLoaded) return;
+    if (sessions.length > 0) return;
+    if (messages.length > 0) return;
+    if (isStreaming) return;
+
+    const marker = `${projectSlug}:${autoPrompt}`;
+    if (autoPromptSentRef.current.has(marker)) return;
+
+    autoPromptSentRef.current.add(marker);
+    sendMessage({ text: autoPrompt });
+  }, [
+    autoPrompt,
+    collapsed,
+    isStreaming,
+    messages.length,
+    projectSlug,
+    sendMessage,
+    sessions.length,
+    sessionsLoaded,
+  ]);
 
   const handleNewSession = useCallback(() => {
     setMessages([]);

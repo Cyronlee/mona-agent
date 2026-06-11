@@ -36,6 +36,8 @@ export const FeatureIndexFrontmatterSchema = z.object({
     desc: z.string().optional(),
     status: z.string().optional(),
     goals: z.array(z.string()).optional(),
+    jiraKey: z.string().optional(),
+    jiraSyncedAt: z.string().optional(),
     updatedAt: z.string().optional(),
 })
 
@@ -114,6 +116,8 @@ export type FeatureSummary = {
     order: number
     storyCount: number
     suggestionCount: number
+    jiraKey?: string
+    jiraSyncedAt?: string
     stories: StorySummary[]
 }
 

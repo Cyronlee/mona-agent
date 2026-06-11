@@ -14,6 +14,7 @@ import { TopBar } from "./TopBar";
 
 type DashboardProps = {
   projectSlug: string;
+  autoPrompt?: string | null;
   projects: ProjectSummary[];
   onSelectProject: (slug: string) => void;
   onCreateNew: () => void;
@@ -21,6 +22,7 @@ type DashboardProps = {
 
 export function Dashboard({
   projectSlug,
+  autoPrompt,
   projects,
   onSelectProject,
   onCreateNew,
@@ -31,10 +33,16 @@ export function Dashboard({
   const [features, setFeatures] = useState<FeatureSummary[]>([]);
   const [suggestions, setSuggestions] = useState<AggregatedSuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
-  const [suggestionsRefreshKey, setSuggestionsRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   const refreshSuggestions = useCallback(() => {
-    setSuggestionsRefreshKey((k) => k + 1);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleRefreshAll = useCallback(() => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
   }, []);
 
   useEffect(() => {
@@ -56,11 +64,12 @@ export function Dashboard({
       .finally(() => {
         if (cancelled) return;
         setSuggestionsLoading(false);
+        setRefreshing(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [projectSlug, suggestionsRefreshKey]);
+  }, [projectSlug, refreshKey]);
 
   return (
     <div
@@ -73,6 +82,8 @@ export function Dashboard({
         currentProjectSlug={projectSlug}
         onSelectProject={onSelectProject}
         onCreateNew={onCreateNew}
+        onRefresh={handleRefreshAll}
+        refreshing={refreshing}
       />
       <div
         className="flex flex-1 overflow-hidden"
@@ -80,6 +91,7 @@ export function Dashboard({
       >
         <LeftPanel
           projectSlug={projectSlug}
+          autoPrompt={autoPrompt}
           suggestions={suggestions}
           suggestionsLoading={suggestionsLoading}
           onInboxExpand={refreshSuggestions}
@@ -91,6 +103,7 @@ export function Dashboard({
           <ProjectWorkspaceContent
             features={features.length > 0 ? features : undefined}
             projectSlug={projectSlug}
+            prdRefreshKey={refreshKey}
           />
         </main>
       </div>

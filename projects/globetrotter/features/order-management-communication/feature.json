@@ -1,0 +1,8 @@
+{
+  "slug": "order-management-communication",
+  "title": "Order Management & Communication",
+  "desc": "Provides tools for Shoppers and Locals to manage ongoing orders and communicate effectively throughout the transaction process.",
+  "status": "planned",
+  "order": 3,
+  "updatedAt": "2026-06-11"
+}

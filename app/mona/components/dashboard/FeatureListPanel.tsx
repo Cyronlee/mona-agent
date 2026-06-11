@@ -4,6 +4,7 @@ import { ToolBoxIcon } from "./dashboardIcons";
 import type { DesignStatus } from "./prdData";
 import type { FeatureSummary, StorySummary } from "../../api/projects";
 import { DocumentDialog } from "../markdown/DocumentDialog";
+import { syncFeatureToJira } from "../../api/projects";
 
 export function StatusIcon({ type }: { type: DesignStatus }) {
   if (type === "Done") {
@@ -175,15 +176,20 @@ function FeatureItem({
   onToggle,
   onOpenFeature,
   onOpenStory,
+  onSync,
+  syncing,
 }: {
   feature: FeatureSummary;
   expanded: boolean;
   onToggle: () => void;
   onOpenFeature: () => void;
   onOpenStory: (story: StorySummary) => void;
+  onSync: (slug: string) => void;
+  syncing: boolean;
 }) {
   const status = toDesignStatus(feature.status);
   const stories = feature.stories ?? [];
+  const synced = !!feature.jiraKey;
   return (
     <div
       className="rounded-[10px] overflow-hidden transition-colors"
@@ -216,6 +222,43 @@ function FeatureItem({
             {feature.title}
           </span>
         </TitleButton>
+        {synced ? (
+          <a
+            href={`https://thoughtworks.atlassian.net/browse/${feature.jiraKey}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#0052CC] shrink-0 no-underline hover:bg-[rgba(0,82,204,0.08)] transition-colors"
+            style={{
+              background: "rgba(0,82,204,0.06)",
+              fontFamily: "Poppins, sans-serif",
+              fontWeight: 500,
+            }}
+            title={`Open ${feature.jiraKey} in Jira`}
+          >
+            <Icon icon="lucide:external-link" width={10} height={10} />
+            {feature.jiraKey}
+          </a>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSync(feature.slug);
+            }}
+            disabled={syncing}
+            className="flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#717182] shrink-0 hover:bg-[rgba(255,127,38,0.08)] hover:text-[#FF7F26] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: "rgba(0,0,0,0.03)",
+              fontFamily: "Poppins, sans-serif",
+              fontWeight: 500,
+              border: "none",
+            }}
+            title="Sync to Jira"
+          >
+            <Icon icon={syncing ? "lucide:loader-2" : "lucide:refresh-cw"} width={10} height={10} className={syncing ? "animate-spin" : ""} />
+            {syncing ? "..." : "Jira"}
+          </button>
+        )}
         <span
           className="flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#717182] shrink-0"
           style={{
@@ -253,6 +296,7 @@ export function FeatureListPanel({
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
+  const [syncingSlug, setSyncingSlug] = useState<string | null>(null);
 
   const toggle = (slug: string) => {
     setExpanded((prev) => {
@@ -261,6 +305,20 @@ export function FeatureListPanel({
       else next.add(slug);
       return next;
     });
+  };
+
+  const handleSync = (slug: string) => {
+    setSyncingSlug(slug);
+    syncFeatureToJira(projectSlug, slug)
+      .then(() => {
+        // force a re-render by toggling the feature list — in practice the parent
+        // will refresh data, but for immediate feedback we reload the page
+        window.location.reload();
+      })
+      .catch((e: Error) => {
+        alert(`Failed to sync to Jira: ${e.message}`);
+        setSyncingSlug(null);
+      });
   };
 
   return (
@@ -306,6 +364,8 @@ export function FeatureListPanel({
             feature={f}
             expanded={expanded.has(f.slug)}
             onToggle={() => toggle(f.slug)}
+            onSync={handleSync}
+            syncing={syncingSlug === f.slug}
             onOpenFeature={() =>
               setOpenDialog({
                 kind: "feature",

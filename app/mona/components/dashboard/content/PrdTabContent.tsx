@@ -81,7 +81,13 @@ function EditableEditor({
     );
 }
 
-export function PrdTabContent({ projectSlug }: { projectSlug: string }) {
+export function PrdTabContent({
+    projectSlug,
+    refreshKey = 0,
+}: {
+    projectSlug: string
+    refreshKey?: number
+}) {
     const [content, setContent] = useState<string | null>(null);
     const [headings, setHeadings] = useState<string[]>([]);
     const [activeHeading, setActiveHeading] = useState<string>("");
@@ -104,7 +110,7 @@ export function PrdTabContent({ projectSlug }: { projectSlug: string }) {
                 }
             })
             .catch(console.error);
-    }, [projectSlug]);
+    }, [projectSlug, refreshKey]);
 
     const scrollToHeading = useCallback((heading: string) => {
         const container = containerRef.current;
