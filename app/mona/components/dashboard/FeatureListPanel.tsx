@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon } from "@iconify/react";
 import { ToolBoxIcon } from "./dashboardIcons";
 import type { DesignStatus } from "./prdData";
 import type { FeatureSummary, StorySummary } from "../../api/projects";
-import { DocumentDialog } from "../markdown/DocumentDialog";
+import { DocumentPanel } from "../markdown/DocumentDialog";
 import { syncFeatureToJira } from "../../api/projects";
 
 export function StatusIcon({ type }: { type: DesignStatus }) {
@@ -92,17 +92,22 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-type OpenDialog =
-  | { kind: "feature"; featureSlug: string; title: string }
-  | { kind: "story"; featureSlug: string; storySlug: string; title: string }
-  | null;
+type PanelView =
+  | { kind: "list" }
+  | { kind: "feature"; featureSlug: string }
+  | { kind: "story"; featureSlug: string; storySlug: string };
+
+type BreadcrumbItem = {
+  label: string;
+  onClick?: () => void;
+};
 
 function TitleButton({
   children,
   onClick,
   className,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   onClick: () => void;
   className?: string;
 }) {
@@ -119,6 +124,200 @@ function TitleButton({
       }
     >
       {children}
+    </button>
+  );
+}
+
+function FeatureJiraAction({
+  feature,
+  syncing,
+  onSync,
+  stopPropagation = false,
+  detailed = false,
+}: {
+  feature: FeatureSummary;
+  syncing: boolean;
+  onSync: (slug: string) => void;
+  stopPropagation?: boolean;
+  detailed?: boolean;
+}) {
+  const className = detailed
+    ? "flex items-center gap-2 rounded-[10px] border border-[rgba(0,37,87,0.16)] px-3 py-2 text-[12px] text-[#002557] shrink-0 no-underline transition-colors hover:bg-[rgba(0,37,87,0.04)]"
+    : "flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] shrink-0 transition-colors";
+
+  if (feature.jiraKey) {
+    return (
+      <a
+        href={`https://thoughtworks.atlassian.net/browse/${feature.jiraKey}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+        className={className + (detailed ? "" : " text-[#0052CC] hover:bg-[rgba(0,82,204,0.08)]")}
+        style={{
+          background: detailed ? "white" : "rgba(0,82,204,0.06)",
+          fontFamily: "Poppins, sans-serif",
+          fontWeight: 500,
+        }}
+        title={`Open ${feature.jiraKey} in Jira`}
+      >
+        <Icon icon="lucide:external-link" width={detailed ? 14 : 10} height={detailed ? 14 : 10} />
+        {feature.jiraKey}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        if (stopPropagation) e.stopPropagation();
+        onSync(feature.slug);
+      }}
+      disabled={syncing}
+      className={
+        className +
+        (detailed
+          ? " bg-white hover:border-[rgba(255,127,38,0.35)] hover:text-[#FF7F26]"
+          : " text-[#717182] hover:bg-[rgba(255,127,38,0.08)] hover:text-[#FF7F26]") +
+        " cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      }
+      style={{
+        fontFamily: "Poppins, sans-serif",
+        fontWeight: 500,
+        borderColor: detailed ? "rgba(0,0,0,0.08)" : undefined,
+      }}
+      title="Sync to Jira"
+    >
+      <Icon
+        icon={syncing ? "lucide:loader-2" : "lucide:refresh-cw"}
+        width={detailed ? 14 : 10}
+        height={detailed ? 14 : 10}
+        className={syncing ? "animate-spin" : ""}
+      />
+      {syncing ? "Syncing..." : detailed ? "Sync to Jira" : "Jira"}
+    </button>
+  );
+}
+
+function PanelBreadcrumbs({ items }: { items: BreadcrumbItem[] }) {
+  return (
+    <div
+      className="flex items-center gap-1 px-4 py-3 border-b border-[rgba(0,0,0,0.08)] shrink-0"
+      style={{ background: "rgba(250,250,252,0.9)" }}
+    >
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <div key={`${item.label}-${index}`} className="flex items-center gap-1 min-w-0">
+            {item.onClick && !isLast ? (
+              <button
+                type="button"
+                onClick={item.onClick}
+                className="text-[13px] text-[#717182] hover:text-[#0a0a0a] transition-colors truncate cursor-pointer"
+                style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
+              >
+                {item.label}
+              </button>
+            ) : (
+              <span
+                className={
+                  "text-[13px] truncate " +
+                  (isLast ? "text-[#0a0a0a]" : "text-[#717182]")
+                }
+                style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
+                aria-current={isLast ? "page" : undefined}
+              >
+                {item.label}
+              </span>
+            )}
+            {!isLast && (
+              <Icon icon="lucide:chevron-right" width={14} height={14} color="#a1a1aa" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FeatureContextCard({
+  feature,
+  syncing,
+  onSync,
+}: {
+  feature: FeatureSummary;
+  syncing: boolean;
+  onSync: (slug: string) => void;
+}) {
+  return (
+    <div
+      className="rounded-[14px] border border-[rgba(0,0,0,0.08)] px-4 py-4 bg-white"
+      style={{ boxShadow: "0px 4px 16px rgba(15,23,42,0.04)" }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex items-center gap-3">
+          <StatusIcon type={toDesignStatus(feature.status)} />
+          <div className="min-w-0">
+            <div
+              className="text-[18px] text-[#0a0a0a] truncate"
+              style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+            >
+              {feature.title}
+            </div>
+            <div className="mt-1 flex items-center gap-2 flex-wrap">
+              <span
+                className="rounded-full px-2 py-0.5 text-[11px] text-[#717182]"
+                style={{
+                  background: "#f3f4f6",
+                  fontFamily: "Poppins, sans-serif",
+                  fontWeight: 500,
+                }}
+              >
+                {feature.storyCount} story{feature.storyCount === 1 ? "" : "ies"}
+              </span>
+              {feature.desc ? (
+                <span
+                  className="text-[12px] text-[#717182] truncate"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  {feature.desc}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <FeatureJiraAction
+          feature={feature}
+          syncing={syncing}
+          onSync={onSync}
+          detailed
+        />
+      </div>
+    </div>
+  );
+}
+
+function StoryFeaturePill({
+  feature,
+  onClick,
+}: {
+  feature: FeatureSummary;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-[12px] border border-[rgba(0,0,0,0.08)] bg-white px-4 py-3 text-left hover:bg-[#fafafa] transition-colors cursor-pointer"
+      style={{ boxShadow: "0px 4px 16px rgba(15,23,42,0.04)" }}
+    >
+      <StatusIcon type={toDesignStatus(feature.status)} />
+      <span
+        className="text-[14px] text-[#0a0a0a] truncate"
+        style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+      >
+        {feature.title}
+      </span>
     </button>
   );
 }
@@ -189,7 +388,6 @@ function FeatureItem({
 }) {
   const status = toDesignStatus(feature.status);
   const stories = feature.stories ?? [];
-  const synced = !!feature.jiraKey;
   return (
     <div
       className="rounded-[10px] overflow-hidden transition-colors"
@@ -222,43 +420,12 @@ function FeatureItem({
             {feature.title}
           </span>
         </TitleButton>
-        {synced ? (
-          <a
-            href={`https://thoughtworks.atlassian.net/browse/${feature.jiraKey}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#0052CC] shrink-0 no-underline hover:bg-[rgba(0,82,204,0.08)] transition-colors"
-            style={{
-              background: "rgba(0,82,204,0.06)",
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 500,
-            }}
-            title={`Open ${feature.jiraKey} in Jira`}
-          >
-            <Icon icon="lucide:external-link" width={10} height={10} />
-            {feature.jiraKey}
-          </a>
-        ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSync(feature.slug);
-            }}
-            disabled={syncing}
-            className="flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#717182] shrink-0 hover:bg-[rgba(255,127,38,0.08)] hover:text-[#FF7F26] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background: "rgba(0,0,0,0.03)",
-              fontFamily: "Poppins, sans-serif",
-              fontWeight: 500,
-              border: "none",
-            }}
-            title="Sync to Jira"
-          >
-            <Icon icon={syncing ? "lucide:loader-2" : "lucide:refresh-cw"} width={10} height={10} className={syncing ? "animate-spin" : ""} />
-            {syncing ? "..." : "Jira"}
-          </button>
-        )}
+        <FeatureJiraAction
+          feature={feature}
+          syncing={syncing}
+          onSync={onSync}
+          stopPropagation
+        />
         <span
           className="flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] text-[#717182] shrink-0"
           style={{
@@ -287,6 +454,221 @@ function FeatureItem({
   );
 }
 
+function FeatureDetailView({
+  feature,
+  projectSlug,
+  syncing,
+  onSync,
+  onBackToList,
+  onOpenStory,
+}: {
+  feature: FeatureSummary;
+  projectSlug: string;
+  syncing: boolean;
+  onSync: (slug: string) => void;
+  onBackToList: () => void;
+  onOpenStory: (story: StorySummary) => void;
+}) {
+  const stories = feature.stories ?? [];
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PanelBreadcrumbs
+        items={[
+          { label: "Feature list", onClick: onBackToList },
+          { label: feature.title },
+        ]}
+      />
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+        <FeatureContextCard feature={feature} syncing={syncing} onSync={onSync} />
+
+        <div
+          className="rounded-[14px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white min-h-[340px]"
+          style={{ boxShadow: "0px 4px 16px rgba(15,23,42,0.04)" }}
+        >
+          <DocumentPanel
+            kind="feature"
+            projectSlug={projectSlug}
+            featureSlug={feature.slug}
+            title={feature.title}
+            showSidePanel={false}
+            className="min-h-[340px]"
+          />
+        </div>
+
+        <div
+          className="rounded-[14px] border border-[rgba(0,0,0,0.08)] bg-white p-3"
+          style={{ boxShadow: "0px 4px 16px rgba(15,23,42,0.04)" }}
+        >
+          <div className="flex items-center justify-between px-1 pb-2">
+            <span
+              className="text-[14px] text-[#0a0a0a]"
+              style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+            >
+              Story card list
+            </span>
+            <span
+              className="flex items-center justify-center rounded-[8px] px-2 text-[12px] text-[#030213]"
+              style={{
+                background: "#eceef2",
+                height: 22,
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 500,
+              }}
+            >
+              {stories.length}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {stories.length > 0 ? (
+              stories.map((story, index) => (
+                <StoryRow
+                  key={story.slug}
+                  story={story}
+                  index={index}
+                  onOpen={() => onOpenStory(story)}
+                />
+              ))
+            ) : (
+              <div
+                className="px-2 py-6 text-[13px] text-[#717182] text-center"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                No story cards yet.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StoryDetailView({
+  feature,
+  story,
+  projectSlug,
+  syncing,
+  onSync,
+  onBackToList,
+  onOpenFeature,
+}: {
+  feature: FeatureSummary;
+  story: StorySummary;
+  projectSlug: string;
+  syncing: boolean;
+  onSync: (slug: string) => void;
+  onBackToList: () => void;
+  onOpenFeature: () => void;
+}) {
+  const storyNumber = String(story.order ?? 0).padStart(3, "0");
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PanelBreadcrumbs
+        items={[
+          { label: "Feature list", onClick: onBackToList },
+          { label: feature.title, onClick: onOpenFeature },
+          { label: story.title },
+        ]}
+      />
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+        <StoryFeaturePill feature={feature} onClick={onOpenFeature} />
+
+        <div
+          className="rounded-[14px] border border-[rgba(0,0,0,0.08)] overflow-hidden bg-white"
+          style={{ boxShadow: "0px 4px 16px rgba(15,23,42,0.04)" }}
+        >
+          <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-[rgba(0,0,0,0.08)]">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-3">
+                <span
+                  className="rounded-[6px] px-2 py-0.5 text-[11px] text-[#717182]"
+                  style={{
+                    background: "#f3f4f6",
+                    fontFamily: "Poppins, sans-serif",
+                    fontWeight: 600,
+                  }}
+                >
+                  {storyNumber}
+                </span>
+                {story.priority != null ? (
+                  <span
+                    className="rounded-[6px] px-2 py-0.5 text-[11px] text-[#717182]"
+                    style={{
+                      background: "#f3f4f6",
+                      fontFamily: "Poppins, sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Priority {story.priority}
+                  </span>
+                ) : null}
+              </div>
+              <div
+                className="text-[18px] text-[#0a0a0a]"
+                style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+              >
+                {story.title}
+              </div>
+              {story.desc ? (
+                <p
+                  className="mt-2 text-[13px] text-[#717182]"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  {story.desc}
+                </p>
+              ) : null}
+            </div>
+            <FeatureJiraAction
+              feature={feature}
+              syncing={syncing}
+              onSync={onSync}
+              detailed
+            />
+          </div>
+
+          <DocumentPanel
+            kind="story"
+            projectSlug={projectSlug}
+            featureSlug={feature.slug}
+            storySlug={story.slug}
+            title={story.title}
+            showSidePanel={false}
+            className="min-h-[420px]"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailNotFound({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PanelBreadcrumbs items={[{ label: "Feature list", onClick: onBack }, { label: "Unavailable" }]} />
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="text-center">
+          <div
+            className="text-[15px] text-[#0a0a0a]"
+            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
+          >
+            The selected document is no longer available.
+          </div>
+          <button
+            type="button"
+            onClick={onBack}
+            className="mt-3 rounded-[10px] border border-[rgba(0,0,0,0.08)] px-3 py-2 text-[13px] text-[#717182] hover:text-[#0a0a0a] hover:bg-[#fafafa] transition-colors cursor-pointer"
+            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
+          >
+            Back to feature list
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FeatureListPanel({
   features,
   projectSlug,
@@ -295,7 +677,7 @@ export function FeatureListPanel({
   projectSlug: string;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
-  const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
+  const [panelView, setPanelView] = useState<PanelView>({ kind: "list" });
   const [syncingSlug, setSyncingSlug] = useState<string | null>(null);
 
   const toggle = (slug: string) => {
@@ -320,6 +702,16 @@ export function FeatureListPanel({
         setSyncingSlug(null);
       });
   };
+
+  const activeFeature =
+    panelView.kind === "list"
+      ? null
+      : features.find((feature) => feature.slug === panelView.featureSlug) ?? null;
+
+  const activeStory =
+    panelView.kind === "story"
+      ? activeFeature?.stories.find((story) => story.slug === panelView.storySlug) ?? null
+      : null;
 
   return (
     <div
@@ -357,56 +749,65 @@ export function FeatureListPanel({
           <Icon icon="lucide:more-vertical" width={14} height={14} color="#717182" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-        {features.map((f) => (
-          <FeatureItem
-            key={f.slug}
-            feature={f}
-            expanded={expanded.has(f.slug)}
-            onToggle={() => toggle(f.slug)}
-            onSync={handleSync}
-            syncing={syncingSlug === f.slug}
-            onOpenFeature={() =>
-              setOpenDialog({
-                kind: "feature",
-                featureSlug: f.slug,
-                title: f.title,
-              })
-            }
-            onOpenStory={(story) =>
-              setOpenDialog({
-                kind: "story",
-                featureSlug: f.slug,
-                storySlug: story.slug,
-                title: story.title,
-              })
-            }
-          />
-        ))}
-      </div>
-      {openDialog?.kind === "feature" && (
-        <DocumentDialog
-          kind="feature"
+      {panelView.kind === "list" ? (
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+          {features.map((f) => (
+            <FeatureItem
+              key={f.slug}
+              feature={f}
+              expanded={expanded.has(f.slug)}
+              onToggle={() => toggle(f.slug)}
+              onSync={handleSync}
+              syncing={syncingSlug === f.slug}
+              onOpenFeature={() =>
+                setPanelView({
+                  kind: "feature",
+                  featureSlug: f.slug,
+                })
+              }
+              onOpenStory={(story) =>
+                setPanelView({
+                  kind: "story",
+                  featureSlug: f.slug,
+                  storySlug: story.slug,
+                })
+              }
+            />
+          ))}
+        </div>
+      ) : activeFeature == null ? (
+        <DetailNotFound onBack={() => setPanelView({ kind: "list" })} />
+      ) : panelView.kind === "feature" ? (
+        <FeatureDetailView
+          feature={activeFeature}
           projectSlug={projectSlug}
-          featureSlug={openDialog.featureSlug}
-          title={openDialog.title}
-          open
-          onOpenChange={(o) => {
-            if (!o) setOpenDialog(null);
-          }}
+          syncing={syncingSlug === activeFeature.slug}
+          onSync={handleSync}
+          onBackToList={() => setPanelView({ kind: "list" })}
+          onOpenStory={(story) =>
+            setPanelView({
+              kind: "story",
+              featureSlug: activeFeature.slug,
+              storySlug: story.slug,
+            })
+          }
         />
-      )}
-      {openDialog?.kind === "story" && (
-        <DocumentDialog
-          kind="story"
+      ) : activeStory == null ? (
+        <DetailNotFound onBack={() => setPanelView({ kind: "list" })} />
+      ) : (
+        <StoryDetailView
+          feature={activeFeature}
+          story={activeStory}
           projectSlug={projectSlug}
-          featureSlug={openDialog.featureSlug}
-          storySlug={openDialog.storySlug}
-          title={openDialog.title}
-          open
-          onOpenChange={(o) => {
-            if (!o) setOpenDialog(null);
-          }}
+          syncing={syncingSlug === activeFeature.slug}
+          onSync={handleSync}
+          onBackToList={() => setPanelView({ kind: "list" })}
+          onOpenFeature={() =>
+            setPanelView({
+              kind: "feature",
+              featureSlug: activeFeature.slug,
+            })
+          }
         />
       )}
     </div>

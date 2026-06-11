@@ -32,36 +32,50 @@ import type {
   SuggestionDocument,
 } from "../../api/projects";
 
-export type DocumentDialogProps =
-  | {
-      kind: "feature";
-      projectSlug: string;
-      featureSlug: string;
-      title: string;
-      open: boolean;
-      onOpenChange: (open: boolean) => void;
-      onUpdated?: (data: FeatureDetail) => void;
-    }
-  | {
-      kind: "story";
-      projectSlug: string;
-      featureSlug: string;
-      storySlug: string;
-      title: string;
-      open: boolean;
-      onOpenChange: (open: boolean) => void;
-      onUpdated?: (data: StoryDocument) => void;
-    }
-  | {
-      kind: "suggestion";
-      projectSlug: string;
-      featureSlug: string;
-      suggestionSlug: string;
-      title: string;
-      open: boolean;
-      onOpenChange: (open: boolean) => void;
-      onUpdated?: (data: SuggestionDocument) => void;
-    };
+type FeatureDocumentProps = {
+  kind: "feature";
+  projectSlug: string;
+  featureSlug: string;
+  title: string;
+  onUpdated?: (data: FeatureDetail) => void;
+};
+
+type StoryDocumentProps = {
+  kind: "story";
+  projectSlug: string;
+  featureSlug: string;
+  storySlug: string;
+  title: string;
+  onUpdated?: (data: StoryDocument) => void;
+};
+
+type SuggestionDocumentProps = {
+  kind: "suggestion";
+  projectSlug: string;
+  featureSlug: string;
+  suggestionSlug: string;
+  title: string;
+  onUpdated?: (data: SuggestionDocument) => void;
+};
+
+export type DocumentPanelProps =
+  | (FeatureDocumentProps & {
+    showSidePanel?: boolean;
+    className?: string;
+  })
+  | (StoryDocumentProps & {
+    showSidePanel?: boolean;
+    className?: string;
+  })
+  | (SuggestionDocumentProps & {
+    showSidePanel?: boolean;
+    className?: string;
+  });
+
+export type DocumentDialogProps = DocumentPanelProps & {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
 
 const cache = new Map<string, FeatureDetail | StoryDocument | SuggestionDocument>();
 
@@ -69,10 +83,12 @@ function FeatureDocumentBody({
   projectSlug,
   featureSlug,
   onUpdated,
+  showSidePanel = true,
 }: {
   projectSlug: string;
   featureSlug: string;
   onUpdated?: (data: FeatureDetail) => void;
+  showSidePanel?: boolean;
 }) {
   const key = `feature:${projectSlug}:${featureSlug}`;
   const [data, setData] = useState<FeatureDetail | null>(
@@ -137,12 +153,14 @@ function FeatureDocumentBody({
   return (
     <>
       <DocumentContent markdown={data.index?.content ?? null} />
-      <DocumentSidePanel
-        fields={frontmatter}
-        onChange={handleChange}
-        saving={saving}
-        errors={fieldErrors}
-      />
+      {showSidePanel ? (
+        <DocumentSidePanel
+          fields={frontmatter}
+          onChange={handleChange}
+          saving={saving}
+          errors={fieldErrors}
+        />
+      ) : null}
     </>
   );
 }
@@ -152,11 +170,13 @@ function StoryDocumentBody({
   featureSlug,
   storySlug,
   onUpdated,
+  showSidePanel = true,
 }: {
   projectSlug: string;
   featureSlug: string;
   storySlug: string;
   onUpdated?: (data: StoryDocument) => void;
+  showSidePanel?: boolean;
 }) {
   const key = `story:${projectSlug}:${featureSlug}:${storySlug}`;
   const [data, setData] = useState<StoryDocument | null>(
@@ -223,12 +243,14 @@ function StoryDocumentBody({
   return (
     <>
       <DocumentContent markdown={data.content} />
-      <DocumentSidePanel
-        fields={frontmatter}
-        onChange={handleChange}
-        saving={saving}
-        errors={fieldErrors}
-      />
+      {showSidePanel ? (
+        <DocumentSidePanel
+          fields={frontmatter}
+          onChange={handleChange}
+          saving={saving}
+          errors={fieldErrors}
+        />
+      ) : null}
     </>
   );
 }
@@ -238,11 +260,13 @@ function SuggestionDocumentBody({
   featureSlug,
   suggestionSlug,
   onUpdated,
+  showSidePanel = true,
 }: {
   projectSlug: string;
   featureSlug: string;
   suggestionSlug: string;
   onUpdated?: (data: SuggestionDocument) => void;
+  showSidePanel?: boolean;
 }) {
   const key = `suggestion:${projectSlug}:${featureSlug}:${suggestionSlug}`;
   const [data, setData] = useState<SuggestionDocument | null>(
@@ -308,12 +332,14 @@ function SuggestionDocumentBody({
   return (
     <>
       <DocumentContent markdown={data.content} />
-      <DocumentSidePanel
-        fields={frontmatter}
-        onChange={handleChange}
-        saving={saving}
-        errors={fieldErrors}
-      />
+      {showSidePanel ? (
+        <DocumentSidePanel
+          fields={frontmatter}
+          onChange={handleChange}
+          saving={saving}
+          errors={fieldErrors}
+        />
+      ) : null}
     </>
   );
 }
@@ -357,6 +383,51 @@ function DocumentSidePanel({
   );
 }
 
+export function DocumentPanel({
+  showSidePanel = true,
+  className,
+  ...props
+}: DocumentPanelProps) {
+  const bodyClassName = [
+    "flex min-h-0 flex-1",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={bodyClassName}>
+      {props.kind === "feature" ? (
+        <FeatureDocumentBody
+          key={`feature:${props.projectSlug}:${props.featureSlug}:${showSidePanel ? "with-panel" : "content-only"}`}
+          projectSlug={props.projectSlug}
+          featureSlug={props.featureSlug}
+          onUpdated={props.onUpdated}
+          showSidePanel={showSidePanel}
+        />
+      ) : props.kind === "suggestion" ? (
+        <SuggestionDocumentBody
+          key={`suggestion:${props.projectSlug}:${props.featureSlug}:${props.suggestionSlug}:${showSidePanel ? "with-panel" : "content-only"}`}
+          projectSlug={props.projectSlug}
+          featureSlug={props.featureSlug}
+          suggestionSlug={props.suggestionSlug}
+          onUpdated={props.onUpdated}
+          showSidePanel={showSidePanel}
+        />
+      ) : (
+        <StoryDocumentBody
+          key={`story:${props.projectSlug}:${props.featureSlug}:${props.storySlug}:${showSidePanel ? "with-panel" : "content-only"}`}
+          projectSlug={props.projectSlug}
+          featureSlug={props.featureSlug}
+          storySlug={props.storySlug}
+          onUpdated={props.onUpdated}
+          showSidePanel={showSidePanel}
+        />
+      )}
+    </div>
+  );
+}
+
 export function DocumentDialog(props: DocumentDialogProps) {
   const { open, onOpenChange } = props;
   return (
@@ -366,30 +437,7 @@ export function DocumentDialog(props: DocumentDialogProps) {
           <DialogTitle>{props.title}</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {props.kind === "feature" ? (
-            <FeatureDocumentBody
-              key={`feature:${props.projectSlug}:${props.featureSlug}`}
-              projectSlug={props.projectSlug}
-              featureSlug={props.featureSlug}
-              onUpdated={props.onUpdated}
-            />
-          ) : props.kind === "suggestion" ? (
-            <SuggestionDocumentBody
-              key={`suggestion:${props.projectSlug}:${props.featureSlug}:${props.suggestionSlug}`}
-              projectSlug={props.projectSlug}
-              featureSlug={props.featureSlug}
-              suggestionSlug={props.suggestionSlug}
-              onUpdated={props.onUpdated}
-            />
-          ) : (
-            <StoryDocumentBody
-              key={`story:${props.projectSlug}:${props.featureSlug}:${props.storySlug}`}
-              projectSlug={props.projectSlug}
-              featureSlug={props.featureSlug}
-              storySlug={props.storySlug}
-              onUpdated={props.onUpdated}
-            />
-          )}
+          <DocumentPanel {...props} />
         </DialogBody>
       </DialogContent>
     </Dialog>

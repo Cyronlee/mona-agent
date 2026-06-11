@@ -1,46 +1,151 @@
-# Mona
+# Mona · Harness Workspace
 
-AI workspace co-pilot，通过分析你的工作活动自动生成可操作的建议、问题和确认。
+<p align="center">
+  <em>AI 原生 workspace co-pilot —— 持续观察你的工作活动、主动浮现关键事项、并行执行想法，一切尽在统一的 Prototype / Code / PRD 画布上。</em>
+</p>
 
-## Product
+<p align="center">
+  <img src="https://img.shields.io/badge/status-alpha-orange" alt="Status: Alpha">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome">
+</p>
 
-### 背景
+---
 
-你是否厌倦了在 Email、云会议 app、云盘中堆积如山的文件等无数工具间疲于奔命，只为拼凑零散的项目信息？你和你的团队每天都在被动的工具中挣扎——它们只会记录，却无法主动分析工作、给出下一步建议。宝贵的时间被浪费在重复沟通和模糊需求上，因为没有任何智能大脑告诉你，现在，真正重要的事情是什么。
+## 什么是 Mona？
 
-### 当前挑战
+Mona 是一个 **AI workspace co-pilot**，旨在重塑产品团队的工作方式。连接你的上下文源（文件、Zoom、Confluence、Google Drive），Mona 的多 Agent 系统会持续分析一切，自动生成可操作的建议、问题和确认。你只需要批准那些认可的内容，专业的子 Agent 便会并行执行任务，在统一的三标签画布上实时交付成果。
 
-- **上下文碎片**：产品上下文分散在应用程序、会议和文档中，没有统一的视图
-- **反应式工作流程**：团队手动识别任务、问题和阻碍因素，而不是让它们自动出现
-- **手动协调**：分配和跟踪并行工作流需要持续的人工监督
-- **反馈循环缓慢**：等待每个建议的人工审核/批准会减慢迭代速度
-- **没有主动智能**：工具不会观察你的活动并建议接下来应该发生什么
+不再在工具间来回切换，不再手动整理待办，只有一个智能层来 **驾驭你的工作空间**，让你始终向前推进。
 
-### 解决方案
+---
 
-Mona 是一个 AI workspace co-pilot，通过分析你的工作活动自动生成可操作的建议、问题和确认。用户连接上下文源（文件、应用程序、指令），AI Agent 持续分析这些上下文以提供相关建议。当用户确认建议时，任务会自动创建并由多个 AI Agent 并行处理。主界面提供三个视图——PRD、原型、代码——让团队在一个地方查看整个产品生命周期的输出。此外，你可以将生成的 story card 直接导入看板工具中，方便团队协作。
+## 工作原理
 
-### 预期成果
+```
+上下文源                  AI 编排                          输出画布
+┌──────────────┐      ┌─────────────────────┐      ┌──────────────────┐
+│   Zoom       │      │                     │      │                  │
+│ Confluence   │─────▶│   主 Agent           │      │  Prototype       │
+│ Google Drive │      │   (分析、建议、      │      │                  │
+│ 文件上传     │      │    提问)            │─────▶│  Code            │
+└──────────────┘      │                     │      │                  │
+                      │         │           │      │  PRD             │
+                      │         ▼           │      │                  │
+                      │   子 Agent           │      └──────────────────┘
+                      │   (并行执行)          │               │
+                      └─────────────────────┘               ▼
+                                                 ┌──────────────────┐
+┌──────────────┐                                │  一键导出          │
+│  智能 Inbox  │                                │  Jira / Linear    │
+│  ─────────── │                                └──────────────────┘
+│  待确认      │
+│  问题        │
+│  建议        │
+└──────────────┘
 
-- **更快的产品迭代**：自动浮现的建议减少了规划和分类的时间
-- **更好的上下文利用**：连接的上下文源确保 AI 建议基于真实的项目上下文
-- **并行执行**：多个 AI Agent 同时工作，加速交付周期
-- **减少协调开销**：确认建议后自动生成任务，消除手动创建任务的需要
-- **提升决策质量**：AI 生成的问题确保团队在构建之前解决遗漏
+         所有状态持久化在  .mona/  目录中（可纳入版本控制）
+```
 
-### 技术方案
+1. **连接** — 接入你的工具、上传文件，Mona 将碎片化的上下文聚合为一个统一视图。
+2. **审查** — 主 AI Agent 分析上下文，实时填充智能 Inbox（待确认、问题、建议）。
+3. **确认** — 批准你认可的内容。一次点击即可派出多个子 Agent 并行执行。
+4. **构建** — 在画布上实时查看 Prototype、Code、PRD 的生成过程，将 Story Card 一键导出至 Jira 或 Linear。
 
-- **前端**：React + TypeScript + Tailwind CSS 构建 workspace UI
-- **AI 编排**：多 Agent 系统，一个 Agent 分析上下文并生成建议/问题，派生的 Agent 并行处理具体任务
-- **集成**：连接 Zoom、Confluence、Google Drive 和文件上传以聚合上下文
-- **状态管理**：Inbox 系统（待确认、问题、建议），随 AI Agent 工作实时更新
-- **输出生成**：三标签画布（原型/代码/PRD）展示 AI 生成的产物
+---
 
-### 成功标准
+## 技术方案
 
-- **与其他 app 良好集成**：获取数据、反向输出数据
-- **建议相关性**：>70% 的 AI 生成建议得到用户确认（表明质量）
-- **首次输出时间**：确认第一个建议后 5 分钟内生成原型/代码/PRD
-- **并行效率**：每个项目平均同时执行 3 个以上的任务
-- **上下文覆盖**：用户每个项目至少连接 2 个上下文源（显示集成功能的采用）
-- **用户满意度**：使用两周后净推荐值 >40
+| 层级 | 技术栈 |
+|---|---|
+| **核心框架** | [Next.js](https://nextjs.org) + [Vercel AI SDK](https://sdk.vercel.ai) |
+| **语言** | TypeScript |
+| **样式** | Tailwind CSS |
+| **AI 编排** | 多 Agent 系统：主 Agent 分析上下文并生成建议；用户确认后，专业子 Agent 通过共享文件系统状态并行执行任务 |
+| **上下文集成** | 连接 Zoom、Confluence、Google Drive，支持直接文件上传 |
+| **状态管理** | 智能 Inbox（待确认 / 问题 / 建议），实时流式更新 |
+| **输出画布** | 三标签视图 —— Prototype / Code / PRD —— 支持一键导出至 Jira 或 Linear |
+| **持久化** | 所有数据（消息、文档、历史记录、上下文快照）存储在项目内的 `.mona/` 隐藏目录中 —— 透明、工具无关、可纳入版本控制 |
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- **Node.js** >= 20
+- **pnpm**（推荐）或 npm
+
+### 安装
+
+```bash
+git clone https://github.com/your-org/mona-agent.git
+cd mona-agent/app
+pnpm install
+```
+
+### 环境变量
+
+在 `app/` 目录下创建 `.env.local` 文件：
+
+```bash
+# AI 提供商 (Google AI SDK)
+GEMINI_API_KEY=your_gemini_api_key
+
+# 集成（可选）
+ZOOM_CLIENT_ID=...
+ZOOM_CLIENT_SECRET=...
+CONFLUENCE_API_TOKEN=...
+GOOGLE_DRIVE_CLIENT_ID=...
+```
+
+### 开发
+
+```bash
+pnpm dev
+```
+
+打开 [http://localhost:3000](http://localhost:3000)，开始驾驭你的工作空间。
+
+---
+
+## 项目结构
+
+```
+mona-agent/
+├── app/                    # Next.js 应用
+│   ├── src/
+│   │   ├── app/            # App Router 页面与 API 路由
+│   │   ├── components/     # React 组件
+│   │   └── lib/            # 工具函数、AI Agent、连接器
+│   ├── package.json
+│   └── next.config.ts
+├── workspace/              # 共享 workspace schema 与配置
+├── projects/               # 示例项目模板
+├── plan.md                 # 架构与规划文档
+└── PRODUCT.md              # 产品规格说明
+```
+
+所有运行时状态保存在项目根目录的 `.mona/` 中 —— 消息、上下文快照和 Agent 输出均为透明、可被 git 追踪。
+
+---
+
+## 为什么是 `.mona/`？
+
+Mona 将 **所有数据** 存储在项目根目录的 `.mona/` 隐藏目录中。这意味着：
+
+- **透明** — 以纯文件形式查看每条消息、每个决策和每件生成的产物。
+- **可版本控制** — 将 Agent 对话和上下文与代码一起提交。
+- **工具无关** — 没有供应商锁定。你的数据归你所有，格式简单、可移植。
+
+---
+
+## 参与贡献
+
+我们欢迎各种形式的贡献 —— Bug 报告、新特性、文档完善、集成扩展。详见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+
+---
+
+## 许可证
+
+MIT © Mona Team

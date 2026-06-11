@@ -1,12 +1,18 @@
 ---
-title: "User Onboarding & Profiles"
-desc: "Details the process and functionalities for user registration, profile creation, and management for both Shoppers and Locals."
-status: "planned"
+title: User Onboarding & Profiles
+desc: >-
+  Details the process and functionalities for user registration, profile
+  creation, and management for both Shoppers and Locals.
+status: planned
 goals:
-  - "Enable seamless and secure user registration."
-  - "Allow users to create comprehensive profiles tailored to their role (Shopper/Local)."
-  - "Ensure basic identity verification for enhanced trust."
-updatedAt: "2026-06-11"
+  - Enable seamless and secure user registration.
+  - >-
+    Allow users to create comprehensive profiles tailored to their role
+    (Shopper/Local).
+  - Ensure basic identity verification for enhanced trust.
+jiraKey: SSP-51
+jiraSyncedAt: '2026-06-11'
+updatedAt: '2026-06-11'
 ---
 
 ## Overview
