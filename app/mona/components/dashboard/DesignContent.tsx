@@ -1,48 +1,19 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
+import { PreviewTabContent } from "./content/PreviewTabContent";
+import { CodeWorkspace } from "./CodeWorkspace";
 
-const DESIGN_TABS = ["Prototype", "Design system"];
+const DESIGN_TABS = ["Prototype", "Design System", "Code"];
 
-function PrototypeSkeletons() {
+function DesignSystemPanel() {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="h-[12px] w-[315px] bg-[#ececf0] rounded-[4px]" />
-
-      <div className="flex items-center justify-center p-6 bg-[#ececf0] rounded-[4px]">
-        <div className="flex gap-10 items-center w-full max-w-[800px] justify-center">
-          <div className="w-[326px] h-[160px] bg-white rounded-[8px] shadow-sm flex items-center justify-center text-gray-300" />
-          <div className="w-[326px] h-[160px] bg-white rounded-[8px] shadow-sm flex items-center justify-center text-gray-300" />
-        </div>
-      </div>
-
-      <div className="flex gap-3">
-        <div className="h-[80px] w-[202px] bg-[#ececf0] rounded-[4px]" />
-        <div className="h-[80px] w-[202px] bg-[#ececf0] rounded-[4px]" />
-        <div className="h-[80px] w-[202px] bg-[#ececf0] rounded-[4px]" />
-      </div>
-
-      <div className="h-[10px] w-full bg-[#ececf0] rounded-[4px]" />
-      <div className="h-[10px] w-full bg-[#ececf0] rounded-[4px]" />
-      <div className="h-[64px] w-full bg-[#ececf0] opacity-60 rounded-[4px]" />
-    </div>
-  );
-}
-
-function PrototypePanel() {
-  return (
-    <div className="flex flex-col flex-1 p-4 bg-[#feffff] overflow-y-auto">
-      <div className="flex justify-end mb-3">
-        <button className="flex items-center gap-1.5 px-2 h-[32px] rounded-[4px] bg-[#f6f6f9] hover:bg-gray-200 cursor-pointer">
-          <Icon icon="lucide:download" width={16} height={16} color="rgba(113,113,130,0.6)" />
-          <span
-            className="text-[12px] text-[rgba(113,113,130,0.6)]"
-            style={{ fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
-          >
-            Export
-          </span>
-        </button>
-      </div>
-      <PrototypeSkeletons />
+    <div className="flex flex-col flex-1 p-8 bg-[#feffff] overflow-y-auto items-center justify-center">
+      <span
+        className="text-[14px] text-[#717182]"
+        style={{ fontFamily: "Poppins, sans-serif" }}
+      >
+        Design System (Coming soon)
+      </span>
     </div>
   );
 }
@@ -79,17 +50,22 @@ function DesignTabs({
   );
 }
 
-export function DesignContent() {
+export function DesignContent({ projectSlug }: { projectSlug: string }) {
   const [activeDesignTab, setActiveDesignTab] = useState(DESIGN_TABS[0]);
 
   return (
-    <div
-      className="flex flex-col flex-1 overflow-hidden"
-      style={{ background: "#f6f6f9", padding: 16 }}
-    >
+    <div className="flex flex-col flex-1 overflow-hidden">
       <div className="flex flex-col flex-1 overflow-hidden rounded-[12px] bg-white border border-[#e5e5e5] shadow-[0px_0px_3px_rgba(144,151,161,0.1)]">
         <DesignTabs activeTab={activeDesignTab} onChange={setActiveDesignTab} />
-        <PrototypePanel />
+        {activeDesignTab === "Prototype" && (
+          <PreviewTabContent projectSlug={projectSlug} />
+        )}
+        {activeDesignTab === "Design System" && (
+          <DesignSystemPanel />
+        )}
+        {activeDesignTab === "Code" && (
+          <CodeWorkspace projectSlug={projectSlug} />
+        )}
       </div>
     </div>
   );

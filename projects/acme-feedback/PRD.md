@@ -1,44 +1,47 @@
-1. Executive Summary & Vision
-1.1 Background
-Consumers today crave unique, authentic, and locally-sourced goods from around the world (e.g., artisanal crafts from Italy, specific snacks from Japan). However, international shipping, language barriers, and lack of local knowledge make cross-border discovery difficult.
-1.2 Product Vision
-Globetrotter is a peer-to-peer (P2P) marketplace that connects global Shoppers looking for unique local items with overseas Locals (Travelers/Residents) who can purchase and ship those items directly to them.
-1.3 Success Metrics (KPIs)
-User Acquisition: 10,000 registered users within the first 30 days of launch.
-Liquidity: At least 15% of posted requests successfully matched and fulfilled.
-Retention: Day-7 user retention rate of 25%.
+---
+title: Acme Feedback Tool — Product Requirements Document
+desc: Defines the full scope, personas, architecture, and feature requirements for the Acme Feedback Tool.
+status: draft
+version: "0.3"
+updatedAt: "2026-06-03"
+---
 
-2. User Personas & Core Workflows
-2.1 The Shopper (Buyer)
-Profile: Urban millennial looking for authentic, non-mass-produced global items.
-Core Workflow: Browses local feeds $\rightarrow$ Posts a specific item request $\rightarrow$ Pays securely $\rightarrow$ Receives item.
-2.2 The Local/Traveler (Buyer\'s Agent)
-Profile: Expats or frequent travelers looking to monetize their location and extra luggage space.
-Core Workflow: Browses open shopper requests in their current city $\rightarrow$ Accepts a request $\rightarrow$ Purchases item $\rightarrow$ Ships/delivers item $\rightarrow$ Gets paid.
+## Background & Vision
 
-3. Feature Requirements
-3.1 User Authentication & Profile
-Requirement: Users must be able to sign up and log in.
-Details:
-Support Email/Password and Google/Apple Sign-In.
-Users must select their "Home Country" and "Current Location" during onboarding.
-3.2 The Global Marketplace Feed (Discovery)
-Requirement: A visual feed for shoppers to discover unique items.
-Details:
-"Explore" Tab: Curated cards of trending local items grouped by country (e.g., "Top picks from Seoul").
-Search & Filter: Search by keywords, filter by country of origin or item category (Food, Fashion, Craft, etc.).
-3.3 Request & Matching System
-Requirement: Allow Shoppers to post what they want, and Locals to accept it.
-Details:
-Create Request: Shoppers fill out a form: Item Name, Country of Origin, Photo (optional), Estimated Price, and "Reward Fee" for the Local.
-Offer/Acceptance: A Local clicks "I can get this," locking the request for a maximum of 48 hours to fulfill.
-3.4 Payment & Escrow (Core Trust Feature)
-Requirement: Secure cross-border transactions to prevent fraud.
-Details:
-When a Local accepts a request, the Shopper’s payment is charged and held in Escrow.
-Total Price Formula:
-$$\text{Total Paid} = \text{Item Cost} + \text{Local\'s Reward} + \text{Shipping Fee} + \text{Globetrotter Service Fee (10\%)}$$
-Funds are released to the Local only after the Shopper confirms delivery or 14 days after shipping tracking shows "Delivered."
-3.5 In-App Messaging
-Requirement: Shopper and Local must be able to communicate details (e.g., sizing, item alternatives).
-Details: Text and image sharing only for the MVP. No voice/video calls.
+Acme Corp's product team collects feedback from thousands of global users but currently has no unified way to synthesize, prioritise, and act on that feedback. The Acme Feedback Tool is a purpose-built platform that ingests user signals from multiple channels, synthesises them using AI agents, and surfaces actionable recommendations directly in the PRD and design workflows.
+
+## Personas & Scenarios
+
+**Primary persona — Product Manager (Priya)**
+Priya receives 200+ user feedback items per week across Zoom calls, emails, and survey forms. She needs to quickly spot patterns, relate them to existing feature requirements, and decide what changes to prioritise in the next sprint.
+
+**Secondary persona — UX Designer (David)**
+David needs to translate feature decisions into design specs. He wants to know the "why" behind each feature update so his screens align with user intent.
+
+## Architecture & Flow
+
+1. Feedback is ingested from connected integrations (Zoom, Gmail, Google Chat, Confluence, Google Drive, Figma).
+2. The AI agent layer (Planner, Builder, Reviewer) processes raw signals, clusters them into themes, and maps themes to PRD features.
+3. Synthesised suggestions appear in the Inbox panel for the PM to accept, block, or defer.
+4. Accepted suggestions are tracked as story updates within the relevant feature.
+
+## Feature Requirements
+
+See individual feature directories under `/features/` for full story breakdowns. High-level feature list:
+
+- Global Marketplace Feed — product discovery via curated feed, filtering, and search
+- User Authentication & Profile — secure sign-up, login, and profile management
+- Payment & Escrow — trust-layer payment processing with escrow hold
+- In-App Messaging — real-time buyer–seller communication
+- Navigation Bar — top-level navigation and quick actions
+- Sign Up — onboarding flow for new users
+- Request & Matching System — buyer request posting and seller matching
+
+## Non-Functional Requirements
+
+- **Performance**: Feed page initial load under 2 seconds on 4G.
+- **Availability**: 99.5% uptime SLA.
+- **Accessibility**: WCAG 2.1 AA compliance for all core flows.
+- **Security**: All payment flows must be PCI-DSS compliant.
+
+hello world
