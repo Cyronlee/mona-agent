@@ -16,27 +16,6 @@ type Suggestion = {
   status?: string;
 };
 
-const FALLBACK_SUGGESTIONS: Suggestion[] = [
-  {
-    id: 0,
-    slug: "replace-nps-prompt",
-    featureSlug: "sign-up",
-    tag: "Sign Up",
-    title:
-      "Henry Howarth suggest to replace the old NPS prompt with the new 1–5 rating.",
-    action: "Swap NPS prompt → 1–5 rating",
-  },
-  {
-    id: 1,
-    slug: "add-global-search",
-    featureSlug: "nps-prompt",
-    tag: "NPS prompt",
-    title:
-      "Henry Howarth suggest to help user to find the item more quickly.",
-    action: "Add global search + filter",
-  },
-];
-
 const MONA_NOTE = "Add a global search function, and a global filter.";
 
 const TONE_OPTIONS = ["Neutral", "Friendly", "Playful"];
@@ -107,7 +86,7 @@ function SuggestionCard({
         </div>
         <button
           onClick={onDismiss}
-          className="hover:opacity-70 transition-opacity shrink-0"
+          className="hover:opacity-70 transition-opacity shrink-0 rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
           aria-label="Dismiss suggestion"
         >
           <Icon icon="lucide:x" width={16} height={16} color="#002557" />
@@ -150,9 +129,10 @@ function SuggestionCard({
         {!resolved && (
           <div className="flex gap-1.5">
             <button
+              type="button"
               onClick={onYes}
               disabled={yesLoading}
-              className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 background: "#002557",
                 height: 28,
@@ -168,9 +148,10 @@ function SuggestionCard({
               Yes
             </button>
             <button
+              type="button"
               onClick={onBlocked}
               disabled={blockedLoading}
-              className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557] transition-all duration-150 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557] transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 background: "white",
                 height: 28,
@@ -213,7 +194,8 @@ function MonaNoteCard() {
       </p>
       <div className="flex gap-1.5">
         <button
-          className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white"
+          type="button"
+          className="flex items-center gap-1 px-2 rounded-[4px] text-[12px] text-white transition-all duration-150 hover:opacity-90 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
           style={{
             background: "#002557",
             height: 28,
@@ -225,7 +207,8 @@ function MonaNoteCard() {
           Yes
         </button>
         <button
-          className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557]"
+          type="button"
+          className="flex items-center px-2 rounded-[4px] text-[12px] text-[#002557] transition-all duration-150 hover:bg-black/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
           style={{
             background: "white",
             height: 28,
@@ -237,7 +220,8 @@ function MonaNoteCard() {
           Blocked
         </button>
         <button
-          className="flex items-center justify-center rounded-[4px]"
+          type="button"
+          className="flex items-center justify-center rounded-[4px] transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
           style={{
             background: "white",
             width: 28,
@@ -268,7 +252,10 @@ function QuestionCard() {
         {TONE_OPTIONS.map((opt) => (
           <span
             key={opt}
-            className="px-2 py-0.5 rounded-full text-[12px] text-[#0a0a0a] cursor-pointer hover:bg-gray-100"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.preventDefault(); }}
+            className="px-2 py-0.5 rounded-full text-[12px] text-[#0a0a0a] cursor-pointer transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
             style={{
               border: "1px solid rgba(0,0,0,0.15)",
               fontFamily: "Poppins, sans-serif",
@@ -279,7 +266,7 @@ function QuestionCard() {
         ))}
       </div>
       <input
-        className="w-full text-[12px] text-[#717182] rounded-[4px] px-2 outline-none"
+        className="w-full text-[12px] text-[#717182] rounded-[4px] px-2 outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40 transition-shadow"
         style={{
           height: 28,
           border: "1px solid rgba(0,0,0,0.1)",
@@ -332,7 +319,7 @@ function CollapsedInbox({
       <div className="flex-1" />
       <button
         onClick={onToggle}
-        className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+        className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
         style={{ width: 24, height: 24 }}
         aria-label="Expand inbox"
       >
@@ -348,7 +335,7 @@ type SuggestionLoading = {
 };
 
 function ExpandedInbox({
-  suggestions: rawSuggestions,
+  suggestions,
   projectSlug,
   suggestionsLoading,
   onToggle,
@@ -408,8 +395,6 @@ function ExpandedInbox({
     [dismiss, showError, projectSlug],
   );
 
-  const suggestions = rawSuggestions;
-
   return (
     <div
       className="flex h-full flex-col shrink-0 overflow-y-auto"
@@ -446,7 +431,7 @@ function ExpandedInbox({
         </div>
         <button
           onClick={onToggle}
-          className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors"
+          className="flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7F26]/40"
           style={{ width: 24, height: 24 }}
           aria-label="Collapse inbox"
         >
@@ -456,7 +441,7 @@ function ExpandedInbox({
 
       {error && (
         <div
-          className="mx-3 mt-2 px-3 py-2 rounded-[8px] text-[11px] text-white animate-in fade-in slide-in-from-top-1 duration-200"
+          className="mx-3 mt-2 px-3 py-2 rounded-[8px] text-[12px] text-white animate-in fade-in slide-in-from-top-1 duration-200 motion-reduce:animate-none"
           style={{ background: "#d4183d", fontFamily: "Poppins, sans-serif" }}
         >
           {error}
@@ -473,7 +458,7 @@ function ExpandedInbox({
           </span>
           {suggestions.length > 0 && (
             <span
-              className="text-[12px] text-[#717182]"
+              className="text-[12px] text-[#626278]"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
               · {suggestions.length}
@@ -483,12 +468,12 @@ function ExpandedInbox({
       </div>
 
       {suggestionsLoading ? (
-        <div className="flex items-center justify-center gap-2 py-6 text-[12px] text-[#717182]" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <div className="flex items-center justify-center gap-2 py-6 text-[12px] text-[#626278]" style={{ fontFamily: "Poppins, sans-serif" }}>
           <Icon icon="lucide:loader-2" width={12} height={12} className="animate-spin" />
           Loading…
         </div>
       ) : suggestions.length === 0 ? (
-        <div className="px-6 py-6 text-[12px] text-[#717182] text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <div className="px-6 py-6 text-[12px] text-[#626278] text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
           No suggestions yet
         </div>
       ) : (
@@ -539,7 +524,7 @@ function ExpandedInbox({
             Questions
           </span>
           <span
-            className="text-[12px] text-[#717182]"
+            className="text-[12px] text-[#626278]"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             · 4
