@@ -1,8 +1,0 @@
-{
-    "slug": "payment-escrow",
-    "title": "Payment & Escrow",
-    "desc": "Trust-layer payment processing with escrow hold, release, and dispute resolution.",
-    "status": "done",
-    "order": 3,
-    "updatedAt": "2026-06-01"
-}
